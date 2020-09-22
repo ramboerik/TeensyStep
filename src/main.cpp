@@ -29,8 +29,8 @@ void setup(){
     digitalWrite(LED_BUILTIN, LOW);
     digitalWrite(ENABLE_PIN, LOW);
 
-    points.push_back(new CPoint(100, 100));
-    points.push_back(new CPoint(200, 200));
+    points.push_back(new CPoint(500, 500));
+   /* points.push_back(new CPoint(200, 200));
     points.push_back(new CPoint(300, 300));
     points.push_back(new CPoint(400, 400));
     points.push_back(new CPoint(500, 500));
@@ -38,25 +38,45 @@ void setup(){
     points.push_back(new CPoint(700, 700));
     points.push_back(new CPoint(800, 800));
     points.push_back(new CPoint(900, 900));
-    points.push_back(new CPoint(1000, 1000));
+    points.push_back(new CPoint(1000, 1000));*/
 
     #ifdef TEENSY3
     Serial.println("TEENSY3");
     #else
     Serial.println("STM32F4");
     #endif
+
+    stepper_x.setAcceleration(200)
+              .setMaxSpeed(200)
+              .setPullInOutSpeed(0, 0);
+
+    stepper_y.setAcceleration(300)
+             .setMaxSpeed(500)
+             .setPullInOutSpeed(0, 0);
 }
 
 void loop(){
-    delay(500);
+    delay(2000);
     digitalWrite(LED_BUILTIN, HIGH);
     Serial.println("Starting new sequence");
 
-    for(auto& point : points){
-        Serial.printf("Moving to x: %d, y: %d\r\n", point->x, point->y);
-        stepper_x.setTargetAbs(point->x);
-        stepper_y.setTargetAbs(point->y);
-        controller.moveAsync(stepper_x, stepper_y);
+    //for(auto& point : points){
+    for(unsigned i = 0; i < points.size(); i++){
+       /* if(i == 0){
+            stepper_x.setPullInOutSpeed(0, 500);
+            stepper_y.setPullInOutSpeed(0, 500);
+        }else if(i == points.size() -1){
+            stepper_x.setPullInOutSpeed(500, 0);
+            stepper_y.setPullInOutSpeed(500, 0);
+        }
+        else{
+            stepper_x.setPullInSpeed(500);
+            stepper_y.setPullInSpeed(500);
+        }*/
+      //  Serial.printf("Moving to x: %d, y: %d\r\n", points.at(i)->x, points.at(i)->y);
+        stepper_x.setTargetRel(points.at(i)->x);
+       // stepper_y.setTargetAbs(points.at(i)->y);
+        controller.moveAsync(stepper_x);//, stepper_y);
         while(controller.isRunning());
     }
 
