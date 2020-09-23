@@ -23,7 +23,6 @@ protected:
     int64_t vs_sqr, ve_sqr, vt_sqr;
     uint32_t two_a;
     int32_t accEnd, decStart;
-    //int num_acc = 0, num_constant = 0, num_dec = 0;
 };
 
 // Inline Implementation =====================================================================================================
@@ -42,8 +41,8 @@ int32_t LinStepAccelerator::prepareMovement(int32_t currentPos, int32_t targetPo
     ve_sqr = ve * ve;
     vt_sqr = vt * vt;
 
-    int32_t sa = (std::abs(vt_sqr - vs_sqr)) / two_a; // required distance to reach target speed, starting with start speed
-    int32_t se = (std::abs(ve_sqr - vt_sqr)) / two_a; // required distance to reach end speed, starting with target speed
+    int32_t sa = (vt_sqr - vs_sqr) / two_a; // required distance to reach target speed, starting with start speed
+    int32_t se = (vt_sqr - ve_sqr) / two_a; // required distance to reach end speed, starting with target speed
 /*
     Serial.printf("ve: %d\r\n", ve);
     Serial.printf("vs: %d\r\n", vs);
@@ -52,19 +51,34 @@ int32_t LinStepAccelerator::prepareMovement(int32_t currentPos, int32_t targetPo
     Serial.printf("sa: %i\r\n", sa);
     Serial.printf("se: %i\r\n", se);
 */
-    if(sa + se > ds) {
-        // target speed cannot be reached, need to calculate new max speed and intersecting point between acc and dec curve
-        vt = sqrtf((ve_sqr - vs_sqr) / 2); // speed at acc/dec curve intersect point
-        vt_sqr = vt * vt;
-        sa = (std::abs(vt_sqr - vs_sqr)) / two_a; // acc distance
-        se = (std::abs(ve_sqr - vt_sqr)) / two_a; // dec distance
-        //Serial.printf("Recalculating, new max speed is: %d\r\n", vt);
+    if(sa + se > ds)
+    {
+        // target speed cannot be reached, need to calculate new max speed with sa + se = ds
+        vt_sqr = (two_a*ds + ve_sqr + vs_sqr) / 2; // new speed that fullfills sa + se = ds
+        sa = (vt_sqr - vs_sqr) / two_a; // acc distance
+        se = (vt_sqr - ve_sqr) / two_a; // dec distance
+
+        // adjust for cases where sa + se = ds is fullfilled but either sa or se is negative. A
+        // negative value for sa means the deceleration phase is too short and the only solution
+        // to reach the desired end speed is to decelerate more steps than ds allows. As we cannot run more steps
+        // we must truncate these and allow a higher end speed than ve.
+        // A negative value for se means the acceleartion phase is too short and we must allow a lower end
+        // speed than ve.
+        if(sa < 0)
+        {
+            se += sa;
+            sa = 0;
+        }
+        if(se < 0)
+        {
+            sa += se;
+            se = 0;
+        }
+    //    Serial.printf("recalculating, new v: %d, sa: %d, se: %d\r\n",(int32_t)sqrtf(vt_sqr) ,sa, se);
     }
     accEnd = sa;
     decStart = ds - se;
     //Serial.printf("acc end: %d, dec start: %d, total: %d\r\n", accEnd, decStart, ds);
-    //Serial.printf("stats: num_acc: %d, num_constant: %d, num_dec: %d\r\n", num_acc, num_constant, num_dec);
-    //num_acc = num_constant = num_dec = 0;
     return vs;
 }
 
@@ -76,25 +90,27 @@ int32_t LinStepAccelerator::updateSpeed(int32_t curPos)
     // acceleration phase -------------------------------------
     if (s < accEnd)
     {
-        //num_acc++;
-        return vs + (vt > vs ? sqrtf(two_a * s) : -sqrtf(two_a * s)); // handle both acc and dec
+        int32_t res = sqrtf(two_a * s + vs_sqr);
+        //Serial.printf("start speed: %d, s: %d, accEnd: %d\r\n", res, s, accEnd);
+        return res;
     }
 
     // constant speed phase ------------------------------------
     if (s < decStart)
     {
-        //num_constant++;
         return vt;
     }
 
     //deceleration phase --------------------------------------
     if (s < ds)
     {
-        //num_dec++;
-        int32_t dec_s = s - decStart;
-        return vt + (ve > vt ? sqrtf(dec_s * two_a) : -sqrtf(dec_s * two_a)); // handle both acc and dec
+        //  return sqrtf(two_a * ((stepsDone < ds - 1) ? ds - stepsDone - 2 : 0) + vs_sqr);
+        int32_t res = sqrtf(ve_sqr + (ds - s - 1) * two_a);
+        //Serial.printf("End speed: %d, s: %d, decStart: %d\r\n", res, s, decStart);
+        return res;
     }
 
+    //Serial.printf("Total steps: %d\r\n", s);
     //we are done, make sure to return 0 to stop the step timer
     return 0;
 }
