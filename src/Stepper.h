@@ -17,16 +17,16 @@ namespace TeensyStep
      public:
         Stepper(const int StepPin, const int DirPin);
 
-        Stepper& setMaxSpeed(int32_t speed);                                  // steps/s
+        virtual Stepper& setMaxSpeed(int32_t speed);                                  // steps/s
         Stepper& setPullInSpeed(int32_t speed);                               // steps/s
         Stepper& setPullInOutSpeed(int32_t pullInpeed, int32_t pullOutSpeed); // steps/s
-        Stepper& setAcceleration(uint32_t _a);                                // steps/s^2
+        virtual Stepper& setAcceleration(uint32_t _a);                                // steps/s^2
 
         Stepper& setStepPinPolarity(int p);  // HIGH -> positive pulses, LOW -> negative pulses
         Stepper& setInverseRotation(bool b); // Change polarity of the dir pulse
 
-        void setTargetAbs(int32_t pos);   // Set target position absolute
-        void setTargetRel(int32_t delta); // Set target position relative to current position
+        virtual void setTargetAbs(int32_t pos);   // Set target position absolute
+        virtual void setTargetRel(int32_t delta); // Set target position relative to current position
 
         inline int32_t getPosition() const { return current; }
         inline void setPosition(int32_t pos) { current = pos; }
