@@ -95,7 +95,7 @@ namespace TeensyStep
 
     void Stepper::setTargetAbs(int32_t target)
     {
-        setTargetRel(target - current);
+        Stepper::setTargetRel(target - current);
     }
 
     void Stepper::setTargetRel(int32_t delta)
