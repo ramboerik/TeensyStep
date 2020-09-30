@@ -62,7 +62,7 @@ namespace TeensyStep
      protected:
         void accTimerISR();
 
-        void doMove(int N, float speedOverride = 1.0f);
+        void doMove(int N, float speedOverride = 1.0f, bool startTimers = true);
 
         Accelerator accelerator;
 
@@ -80,7 +80,7 @@ namespace TeensyStep
     }
 
     template <typename a, typename t>
-    void StepControlBase<a, t>::doMove(int N, float speedOverride)
+    void StepControlBase<a, t>::doMove(int N, float speedOverride, bool startTimers)
     {
         //Calculate Bresenham parameters -------------------------------------
         std::sort(this->motorList, this->motorList + N, Stepper::cmpDelta); // The motor which does most steps leads the movement, move to top of list
@@ -100,11 +100,12 @@ namespace TeensyStep
         if (this->leadMotor->A == 0 || targetSpeed == 0) return;
 
         // Start move--------------------------
-        this->timerField.begin();
-
         this->timerField.setStepFrequency(accelerator.prepareMovement(this->leadMotor->current, this->leadMotor->target, targetSpeed, pullInSpeed, pullOutSpeed, acceleration));
-        this->timerField.stepTimerStart();
-        this->timerField.accTimerStart();
+        if(startTimers){
+            this->timerField.begin();
+            this->timerField.stepTimerStart();
+            this->timerField.accTimerStart();
+        }
     }
 
     // ISR -----------------------------------------------------------------------------------------------------------
