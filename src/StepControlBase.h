@@ -85,6 +85,7 @@ namespace TeensyStep
         //Calculate Bresenham parameters -------------------------------------
         std::sort(this->motorList, this->motorList + N, Stepper::cmpDelta); // The motor which does most steps leads the movement, move to top of list
         this->leadMotor = this->motorList[0];
+       // Serial.printf("Stepper: %s is the leader\r\n", this->leadMotor->name.c_str());
 
         for (int i = 1; i < N; i++)
         {
@@ -113,10 +114,33 @@ namespace TeensyStep
     template <typename a, typename t>
     void StepControlBase<a, t>::accTimerISR()
     {
-        if (this->isRunning())
+        if(!this->isRunning())
         {
-            this->timerField.setStepFrequency(accelerator.updateSpeed(this->leadMotor->current));
+            return;
         }
+        int32_t speed = accelerator.updateSpeed(this->leadMotor->current);
+        // Movement is finished when speed is 0
+        if(speed == 0)
+        {
+            // Serial.printf("End of movement to relative pos: %d\r\n", this->leadMotor->target);
+            bool any_targets = false;
+            int N = 0; // no storage of current attached steppers so need to store it here for doMove call
+
+            // check if any steppers have more movement enqueued
+            while(this->motorList[N] != nullptr)
+            {
+                //int32_t current_pos = this->motorList[N]->current;
+                any_targets |= this->motorList[N]->nextTarget();
+                //Serial.printf("'%s' has segment, current pos: %d target %d\r\n", this->motorList[N]->name.c_str(), current_pos, this->motorList[N]->target);
+                N++;
+            }
+            if(any_targets)
+            {
+                doMove(N, 1.0f, false);
+                return;
+            }
+        }
+        this->timerField.setStepFrequency(speed);
     }
 
     // Non blocking movements ---------------------------------------------------------------------------------------

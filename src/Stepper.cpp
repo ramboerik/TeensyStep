@@ -104,4 +104,61 @@ namespace TeensyStep
         target = current + delta;
         A = std::abs(delta);
     }
+
+    void Stepper::loadTarget(const Target& t){
+        vPullIn = t.vPullIn;
+        vPullOut = t.vPullOut;
+        t.abs ? setTargetAbs(t.target) : setTargetRel(t.target);
+        t_index++;
+    }
+
+    bool Stepper::addTargetAbs(int32_t pos, int32_t pullIn, int32_t pullOut){
+        Target *t = new Target(pos, pullIn, pullOut, true);
+        if(!t){
+            return false;
+        }
+
+        if(targets.size() == 0){
+            loadTarget(*t);
+        }
+        targets.push_back(t);
+        return true;
+    }
+
+    bool Stepper::addTargetRel(int32_t delta, int32_t pullIn, int32_t pullOut){
+        Target *t = new Target(delta, pullIn, pullOut);
+        if(!t){
+            return false;
+        }
+        // special case
+        if(targets.size() == 0){
+            loadTarget(*t);
+        }
+        targets.push_back(t);
+        return true;
+    }
+
+    void Stepper::repeatTargets(){
+        t_index = 0;
+        // Reload the first target in the list
+        if(targets.size() > 0){
+            loadTarget(*targets[0]);
+        }
+    }
+
+    void Stepper::removeTargets(){
+        t_index = 0;
+        for(auto it = targets.begin(); it != targets.end();){
+            it = targets.erase(it);
+        }
+    }
+
+    bool Stepper::nextTarget(){
+        if(t_index >= targets.size()){
+            vPullIn = vPullOut = vPullInOutDefault;
+            return false;
+        }
+        loadTarget(*targets[t_index]);
+        return true;
+    }
 }

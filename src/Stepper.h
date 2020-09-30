@@ -3,10 +3,10 @@
 #include <algorithm>
 #include <cstdint>
 #include <string>
+#include <vector>
 
 namespace TeensyStep
 {
-
     class Stepper
     {
         static constexpr int32_t vMaxMax = 300000;   // largest speed possible (steps/s)
@@ -28,21 +28,43 @@ namespace TeensyStep
 
         virtual void setTargetAbs(int32_t pos);   // Set target position absolute
         virtual void setTargetRel(int32_t delta); // Set target position relative to current position
+        bool addTargetAbs(int32_t pos, int32_t pullIn = vPullInOutDefault, int32_t pullOut = vPullInOutDefault);
+        bool addTargetRel(int32_t delta, int32_t pullIn = vPullInOutDefault, int32_t pullOut = vPullInOutDefault);
+        bool nextTarget();
+        void repeatTargets();
+        void removeTargets();
 
         inline int32_t getPosition() const { return current; }
         inline void setPosition(int32_t pos) { current = pos; }
         int32_t dir;
 
      protected:
+        // Internal representation of a target
+        class Target
+        {
+        public:
+            Target(int32_t target, int32_t vPullIn = Stepper::vPullInOutDefault, int32_t vPullOut = Stepper::vPullInOutDefault, bool abs = false) :
+                target(target), vPullIn(vPullIn), vPullOut(vPullOut), abs(abs) {}
+            int32_t target;
+            int32_t vPullIn;
+            int32_t vPullOut;
+            bool abs = false;
+        };
+
+        void loadTarget(const Target& t);
+
         inline void doStep();
         inline void clearStepPin() const;
 
         inline void setDir(int d);
         inline void toggleDir();
 
+        // positions
         volatile int32_t current;
         volatile int32_t currentSpeed;
         volatile int32_t target;
+        std::vector<Target*> targets;
+        unsigned t_index = 0;
 
         int32_t A, B; // Bresenham paramters
         int32_t vMax;
