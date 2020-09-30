@@ -3,8 +3,8 @@
 
 namespace TeensyStep
 {
-    Stepper::Stepper(const int _stepPin, const int _dirPin)
-        : current(0), stepPin(_stepPin), dirPin(_dirPin)
+    Stepper::Stepper(const int _stepPin, const int _dirPin, const char* name)
+        : current(0), t_index(0), stepPin(_stepPin), dirPin(_dirPin), name(name)
     {
         setStepPinPolarity(HIGH);
         setInverseRotation(false);

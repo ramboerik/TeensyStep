@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <string>
 
 namespace TeensyStep
 {
@@ -15,7 +16,7 @@ namespace TeensyStep
         static constexpr uint32_t aDefault = 2500; // reasonably low (~0.5s for reaching the default speed)
 
      public:
-        Stepper(const int StepPin, const int DirPin);
+        Stepper(const int StepPin, const int DirPin, const char* name = "");
 
         virtual Stepper& setMaxSpeed(int32_t speed);                          // steps/s
         Stepper& setPullInSpeed(int32_t speed);                               // steps/s
@@ -65,6 +66,7 @@ namespace TeensyStep
         volatile uint8_t reverse;
 #endif
         const int stepPin, dirPin;
+        std::string name;
 
         // Friends
         template <typename a, typename t>
