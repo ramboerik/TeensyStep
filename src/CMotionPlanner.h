@@ -2,7 +2,7 @@
 #define CMOTIONPLANNER_H
 
 #include <vector>
-#include "TeensyStep.h"
+#include "Stepper.h"
 #include "CPoint.h"
 
 /**

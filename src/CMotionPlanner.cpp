@@ -1,5 +1,6 @@
-#include "CMotionPlanner.h"
+#include "TeensyStep.h"
 #include <math.h>
+#include "CMotionPlanner.h"
 
 CMotionPlanner::CMotionPlanner(Stepper &x, Stepper &y, Stepper &z, int speed, int acc) : x(x), y(y), z(z), speed(speed), acc(acc){
     x.setAcceleration(acc);
