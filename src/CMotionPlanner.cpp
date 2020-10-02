@@ -40,18 +40,18 @@ float CMotionPlanner::getAngle(int x0, int y0, int x1, int y1){
 void CMotionPlanner::setTarget(int t_x, int t_y, float angle, int &pullin_x, int &pullin_y){
     //Serial.printf("Target (x: %d, y: %d), speed_x: %d, speed_y: %d, angle: ", t_x, t_y, speed, speed);
     //Serial.println(angle);
-    if(angle > 45){
-        // the change in motion angle is low, we can keep full speed
-        x.addTargetAbs(t_x, speed, pullin_x, default_pullin);
-        y.addTargetAbs(t_y, speed, pullin_y, default_pullin);
-        pullin_x = pullin_y = default_pullin;
-    }
-    else{
+    if(angle < 45){
         // the change in motion angle is too large, we need to slow down
         x.addTargetAbs(t_x, speed, pullin_x, speed);
         y.addTargetAbs(t_y, speed, pullin_y, speed);
         pullin_x = speed; // ask stepper for real ve instead of assupmtion that everything is fine?
         pullin_y = speed; // ask stepper for real ve instead of assupmtion that everything is fine?
+    }
+    else{
+        // the change in motion angle is low, we can keep full speed
+        x.addTargetAbs(t_x, speed, pullin_x, default_pullin);
+        y.addTargetAbs(t_y, speed, pullin_y, default_pullin);
+        pullin_x = pullin_y = default_pullin;
     }
 }
 /**
