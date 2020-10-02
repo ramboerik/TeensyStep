@@ -28,8 +28,8 @@ namespace TeensyStep
 
         virtual void setTargetAbs(int32_t pos);   // Set target position absolute
         virtual void setTargetRel(int32_t delta); // Set target position relative to current position
-        bool addTargetAbs(int32_t pos, int32_t pullIn = vPullInOutDefault, int32_t pullOut = vPullInOutDefault);
-        bool addTargetRel(int32_t delta, int32_t pullIn = vPullInOutDefault, int32_t pullOut = vPullInOutDefault);
+        bool addTargetAbs(int32_t pos, int32_t speed = 0, int32_t pullIn = 0, int32_t pullOut = 0);
+        bool addTargetRel(int32_t delta, int32_t speed = 0, int32_t pullIn = 0, int32_t pullOut = 0);
         bool nextTarget();
         void repeatTargets();
         void removeTargets();
@@ -43,9 +43,10 @@ namespace TeensyStep
         class Target
         {
         public:
-            Target(int32_t target, int32_t vPullIn = Stepper::vPullInOutDefault, int32_t vPullOut = Stepper::vPullInOutDefault, bool abs = false) :
-                target(target), vPullIn(vPullIn), vPullOut(vPullOut), abs(abs) {}
+            Target(int32_t target, int32_t speed = 0, int32_t vPullIn = -1, int32_t vPullOut = -1, bool abs = false) :
+                target(target), speed(speed), vPullIn(vPullIn), vPullOut(vPullOut), abs(abs) {}
             int32_t target;
+            int32_t speed;
             int32_t vPullIn;
             int32_t vPullOut;
             bool abs = false;

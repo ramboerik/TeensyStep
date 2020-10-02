@@ -81,15 +81,17 @@ namespace TeensyStep
 
     Stepper& Stepper::setPullInSpeed(int32_t speed)
     {
-        vPullIn = vPullOut = std::min(std::abs(speed), vMax);
-        return *this;
+        return setPullInOutSpeed(speed, speed);
     }
 
     Stepper& Stepper::setPullInOutSpeed(int32_t pullInSpeed, int32_t pullOutSpeed)
     {
-        vPullIn = std::min(std::abs(pullInSpeed), vMax);
-        vPullOut = std::min(std::abs(pullOutSpeed), vMax);
-
+        if(pullInSpeed >= 0){
+            vPullIn = std::min(std::abs(pullInSpeed), vMax);
+        }
+        if(pullOutSpeed >= 0){
+            vPullOut = std::min(std::abs(pullOutSpeed), vMax);
+        }
         return *this;
     }
 
@@ -105,57 +107,69 @@ namespace TeensyStep
         A = std::abs(delta);
     }
 
-    void Stepper::loadTarget(const Target& t){
-        vPullIn = t.vPullIn;
-        vPullOut = t.vPullOut;
+    void Stepper::loadTarget(const Target& t)
+    {
+        //Serial.printf("Loading target %d, index: %d of total: %d\r\n", t.target, t_index, targets.size());
+        if(t.speed != 0) setMaxSpeed(t.speed);
+        setPullInOutSpeed(t.vPullIn, t.vPullOut);
         t.abs ? setTargetAbs(t.target) : setTargetRel(t.target);
         t_index++;
     }
 
-    bool Stepper::addTargetAbs(int32_t pos, int32_t pullIn, int32_t pullOut){
-        Target *t = new Target(pos, pullIn, pullOut, true);
-        if(!t){
+    bool Stepper::addTargetAbs(int32_t pos, int32_t speed, int32_t pullIn, int32_t pullOut)
+    {
+        Target *t = new Target(pos, speed, pullIn, pullOut, true);
+        if(!t)
+        {
             return false;
         }
-
-        if(targets.size() == 0){
+        // Make sure the first target is loaded for the move call
+        if(targets.size() == 0)
+        {
             loadTarget(*t);
         }
         targets.push_back(t);
         return true;
     }
 
-    bool Stepper::addTargetRel(int32_t delta, int32_t pullIn, int32_t pullOut){
-        Target *t = new Target(delta, pullIn, pullOut);
-        if(!t){
+    bool Stepper::addTargetRel(int32_t delta, int32_t speed, int32_t pullIn, int32_t pullOut)
+    {
+        Target *t = new Target(delta, speed, pullIn, pullOut);
+        if(!t)
+        {
             return false;
         }
-        // special case
-        if(targets.size() == 0){
+        // Make sure the first target is loaded for the move call
+        if(targets.size() == 0)
+        {
             loadTarget(*t);
         }
         targets.push_back(t);
         return true;
     }
 
-    void Stepper::repeatTargets(){
+    void Stepper::repeatTargets()
+    {
         t_index = 0;
         // Reload the first target in the list
-        if(targets.size() > 0){
+        if(targets.size() > 0)
+        {
             loadTarget(*targets[0]);
         }
     }
 
     void Stepper::removeTargets(){
         t_index = 0;
-        for(auto it = targets.begin(); it != targets.end();){
+        for(auto it = targets.begin(); it != targets.end();)
+        {
             it = targets.erase(it);
         }
     }
 
-    bool Stepper::nextTarget(){
-        if(t_index >= targets.size()){
-            vPullIn = vPullOut = vPullInOutDefault;
+    bool Stepper::nextTarget()
+    {
+        if(t_index >= targets.size())
+        {
             return false;
         }
         loadTarget(*targets[t_index]);
