@@ -97,10 +97,20 @@ namespace TeensyStep
         uint32_t pullInSpeed = this->leadMotor->vPullIn;
         uint32_t pullOutSpeed = this->leadMotor->vPullOut;
         uint32_t acceleration = (*std::min_element(this->motorList, this->motorList + N, Stepper::cmpAcc))->a; // use the lowest acceleration for the move
-
-        if (this->leadMotor->A == 0 || targetSpeed == 0) return;
+/*
+        if (this->leadMotor->A == 0 || targetSpeed == 0){
+            // TODO problem here, if abs positions are used and same position is end and start in motion chain it will abort here and never continue the chain.
+            // removing this exit causes setAbsPosition to hack 1 step on call.
+            // must have additional condition here that checks all targets if any has more movements and start in that case.
+            //Serial.println("Aborting as we already are at desired position");
+            return;
+        }
+*/
 
         // Start move--------------------------
+        // it's important that prepareMovement doesn't return vs = 0 here when running a motion as it will cause  the stepper interrupt to end and the timers won't restart
+        // This seems to not happen when running in the old target mode as the stop is returned before the timers are started.
+        // A  workaround for now  is to never use vs = 0 in a motion chain.
         this->timerField.setStepFrequency(accelerator.prepareMovement(this->leadMotor->current, this->leadMotor->target, targetSpeed, pullInSpeed, pullOutSpeed, acceleration));
         if(startTimers){
             this->timerField.begin();
@@ -131,7 +141,7 @@ namespace TeensyStep
             {
                 //int32_t current_pos = this->motorList[N]->current;
                 any_targets |= this->motorList[N]->nextTarget();
-                //Serial.printf("'%s' has segment, current pos: %d target %d\r\n", this->motorList[N]->name.c_str(), current_pos, this->motorList[N]->target);
+                //Serial.printf("'%s' has segment, current pos: %d target %d, pullin: %d\r\n", this->motorList[N]->name.c_str(), current_pos, this->motorList[N]->target, this->motorList[N]->vPullIn);
                 N++;
             }
             if(any_targets)

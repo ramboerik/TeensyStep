@@ -12,6 +12,7 @@ CMotionPlanner::~CMotionPlanner(){
         it = targets.erase(it);
     }
 }
+
 /**
  * \brief Add point to motion.
  */
@@ -51,25 +52,33 @@ void CMotionPlanner::getSpeed(int delta_x, int delta_y, int &speed_x, int &speed
  *        on angle change in motion. If the angle of the motion is changed with more than 45
  *         degrees a full stop/start is done between the targets. If the angle is less than 45
  *         degrees full speed is kept.
+ * \param[in] t_x X target
+ * \param[in] t_y Y target
+ * \param[in] angle Angle between the current and the next target vector
+ * \param[in] speed_x X axis max speed
+ * \param[in] speed_y Y axis max speed
+ * \param[in/out] pullin_x Pullin X speed to use for the current target. Is also updated to be used for the next target.
+ * \param[in/out] pullin_y Pullin Y speed to use for the current target. Is also updated to be used for the next target.
  */
 void CMotionPlanner::setTarget(int t_x, int t_y, float angle, int speed_x, int speed_y, int &pullin_x, int &pullin_y){
     Serial.printf("Target (x: %d, y: %d), speed_x: %d, speed_y: %d, angle: ", t_x, t_y, speed_x, speed_y);
     Serial.println(angle);
 
     if(angle < 45){
-        // the change in motion angle is too large, we need to slow down
+        // the change in motion angle is low, we can keep full speed
         x.addTargetAbs(t_x, speed, pullin_x, speed_x);
         y.addTargetAbs(t_y, speed, pullin_y, speed_y);
         pullin_x = speed_x; // ask stepper for real ve instead of assuming that everything is fine?
         pullin_y = speed_y; // ask stepper for real ve instead of assuming that everything is fine?
     }
     else{
-        // the change in motion angle is low, we can keep full speed
+        // the change in motion angle is too large, we need to slow down
         x.addTargetAbs(t_x, speed_x, pullin_x, default_pullin);
         y.addTargetAbs(t_y, speed_y, pullin_y, default_pullin);
         pullin_x = pullin_y = default_pullin;
     }
 }
+
 /**
  * \brief Calculate motion, must be done before call to move of steppers. The motion should be re-calculated on
  *        every new call to move, even if no points were removed/added.
@@ -114,7 +123,6 @@ void CMotionPlanner::calculate(){
         int x1 = targets[i+1]->x - targets[i]->x;
         int y1 = targets[i+1]->y - targets[i]->y;
 
-        //angle = getAngle(targets[i]->x, targets[i]->y, x0, y0);
         angle = getAngle(x0, y0, x1, y1);
         //getSpeed(x1, y1, speed_x, speed_y);
         setTarget(targets[i]->x, targets[i]->y, angle, speed_x, speed_y, next_pullin_x, next_pullin_y);
