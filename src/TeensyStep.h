@@ -3,6 +3,7 @@
 #include "RotateControlBase.h"
 #include "StepControlBase.h"
 #include "CMotionPlanner.h"
+#include "CPoint.h"
 #include "Stepper.h"
 #include "accelerators/LinRotAccelerator.h"
 #include "accelerators/LinStepAccelerator.h"
@@ -59,3 +60,5 @@ using RotateControlTick = TeensyStep::RotateControlBase<LinStepAccelerator, Tick
 // using StepControl_tick = StepControlBase<LinStepAccelerator, stepPulseWidth, a>;
 
 using Stepper = TeensyStep::Stepper;
+using CMotionPlanner = TeensyStep::CMotionPlanner;
+using CPoint = TeensyStep::CPoint;
