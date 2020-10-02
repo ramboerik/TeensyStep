@@ -32,6 +32,9 @@ class CMotionPlanner{
         CMotionPlanner(Stepper &x, Stepper &y, Stepper &z, int speed, int acc);
         ~CMotionPlanner();
         void addPoint(int x, int y, int z);
+        void removePoints();
+        void setSpeed(int s) { speed = s; }
+        void setAcceleration(int a) {acc = a; }
         void calculate();
 };
 

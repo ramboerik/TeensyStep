@@ -2,6 +2,7 @@
 
 #include "RotateControlBase.h"
 #include "StepControlBase.h"
+#include "CMotionPlanner.h"
 #include "Stepper.h"
 #include "accelerators/LinRotAccelerator.h"
 #include "accelerators/LinStepAccelerator.h"

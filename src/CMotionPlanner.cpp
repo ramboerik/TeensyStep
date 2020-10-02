@@ -8,10 +8,15 @@ CMotionPlanner::CMotionPlanner(Stepper &x, Stepper &y, Stepper &z, int speed, in
 }
 
 CMotionPlanner::~CMotionPlanner(){
+    removePoints();
+}
+
+void CMotionPlanner::removePoints(){
     for(auto it = targets.begin(); it != targets.end();){
         it = targets.erase(it);
     }
 }
+
 
 /**
  * \brief Add point to motion.
