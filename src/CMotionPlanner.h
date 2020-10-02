@@ -21,9 +21,14 @@ class CMotionPlanner{
         static constexpr int default_pullin = 100;
 
         float getAngle(int x0, int y0, int x1, int y1);
-        void setTarget(int t_x, int t_y, float angle, int &pullin_x, int &pullin_y);
+        void getSpeed(int delta_x, int delta_y, int &speed_x, int &speed_y);
+        void setTarget(int t_x, int t_y, float angle, int speed_x, int speed_y, int &pullin_x, int &pullin_y);
 
     public:
+        // Actual speed will be in the interval [speed, sqrt(2)*speed] as the speed in
+        // separated in x and y component.
+        // lowest speed is reached when only one axis run.
+        // max speed is reached when both axis run equal length.
         CMotionPlanner(Stepper &x, Stepper &y, Stepper &z, int speed, int acc);
         ~CMotionPlanner();
         void addPoint(int x, int y, int z);
