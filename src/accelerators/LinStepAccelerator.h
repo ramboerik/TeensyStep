@@ -43,14 +43,9 @@ int32_t LinStepAccelerator::prepareMovement(int32_t currentPos, int32_t targetPo
 
     int32_t sa = (vt_sqr - vs_sqr) / two_a; // required distance to reach target speed, starting with start speed
     int32_t se = (vt_sqr - ve_sqr) / two_a; // required distance to reach end speed, starting with target speed
-/*
-    Serial.printf("ve: %d\r\n", ve);
-    Serial.printf("vs: %d\r\n", vs);
-    Serial.printf("vt: %d\r\n", vt);
-    Serial.printf("ds: %d\r\n", ds);
-    Serial.printf("sa: %i\r\n", sa);
-    Serial.printf("se: %i\r\n", se);
-*/
+
+    Serial.printf("ve: %d, vs: %d, vt: %d, ds: %d, sa: %d, se: %d\r\n", ve, vs, vt, ds, sa, se);
+
     if(sa + se > ds)
     {
         // target speed cannot be reached, need to calculate new max speed with sa + se = ds
