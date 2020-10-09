@@ -20,7 +20,7 @@ namespace TeensyStep
 
         virtual Stepper& setMaxSpeed(int32_t speed);                          // steps/s
         Stepper& setPullInSpeed(int32_t speed);                               // steps/s
-        Stepper& setPullInOutSpeed(int32_t pullInpeed, int32_t pullOutSpeed); // steps/s
+        virtual Stepper& setPullInOutSpeed(int32_t pullInpeed, int32_t pullOutSpeed); // steps/s
         virtual Stepper& setAcceleration(uint32_t _a);                        // steps/s^2
 
         Stepper& setStepPinPolarity(int p);  // HIGH -> positive pulses, LOW -> negative pulses
