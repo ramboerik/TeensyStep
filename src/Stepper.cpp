@@ -166,6 +166,8 @@ namespace TeensyStep
     {
         if(t_index >= targets.size())
         {
+            A = 0; // set number of steps to zero to flag that there is no more work
+                   // to do for this stepper
             return false;
         }
         loadTarget(*targets[t_index]);

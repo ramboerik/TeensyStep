@@ -69,8 +69,8 @@ namespace TeensyStep
      * \param[in/out] pullin_y Pullin Y speed to use for the current target. Is also updated to be used for the next target.
      */
     void CMotionPlanner::setTarget(int t_x, int t_y, float angle, int speed_x, int speed_y, int &pullin_x, int &pullin_y){
-        Serial.printf("Target (x: %d, y: %d), speed_x: %d, speed_y: %d, angle: ", t_x, t_y, speed_x, speed_y);
-        Serial.println(angle);
+        //Serial.printf("Target (x: %d, y: %d), speed_x: %d, speed_y: %d, angle: ", t_x, t_y, speed_x, speed_y);
+        //Serial.println(angle);
 
         if(angle < 45){
             // the change in motion angle is low, we can keep full speed
