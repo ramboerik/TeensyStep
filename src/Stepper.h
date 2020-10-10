@@ -43,13 +43,13 @@ namespace TeensyStep
         class Target
         {
         public:
-            Target(int32_t target, int32_t speed = 0, int32_t vPullIn = -1, int32_t vPullOut = -1, bool abs = false) :
-                target(target), speed(speed), vPullIn(vPullIn), vPullOut(vPullOut), abs(abs) {}
+            Target(int32_t target, int32_t speed = 0, int32_t vPullIn = -1, int32_t vPullOut = -1, bool absPos = false) :
+                target(target), speed(speed), vPullIn(vPullIn), vPullOut(vPullOut), absPos(absPos) {}
             int32_t target;
             int32_t speed;
             int32_t vPullIn;
             int32_t vPullOut;
-            bool abs = false;
+            bool absPos = false;
         };
 
         void loadTarget(const Target& t);

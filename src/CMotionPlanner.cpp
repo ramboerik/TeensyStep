@@ -1,5 +1,5 @@
-#include "TeensyStep.h"
-#include <math.h>
+#include <Arduino.h>
+#include "Stepper.h"
 #include "CMotionPlanner.h"
 
 namespace TeensyStep
@@ -51,8 +51,8 @@ namespace TeensyStep
      */
     void CMotionPlanner::getSpeed(int delta_x, int delta_y, int &speed_x, int &speed_y){
         float len = sqrtf(delta_x*delta_x + delta_y*delta_y);
-        speed_x = std::abs(speed*(delta_x/len));
-        speed_y = std::abs(speed*(delta_y/len));
+        speed_x = std::abs(static_cast<int>(speed*(delta_x/len)));
+        speed_y = std::abs(static_cast<int>(speed*(delta_y/len)));
     }
 
     /**
