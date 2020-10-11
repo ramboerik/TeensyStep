@@ -60,10 +60,12 @@ namespace TeensyStep
         void setCallback(void (*_callback)()) { this->callback = _callback; }
 
      protected:
+        Stepper* fullList[MaxMotors + 1];
+
         void accTimerISR();
 
         bool nextTarget();
-        bool haveWork(Stepper* filteredList[], int &len);
+        bool filterWork(int &len);
         bool doMove(float speedOverride = 1.0f, bool startTimers = true);
         int getNumSteppers();
 
@@ -85,7 +87,7 @@ namespace TeensyStep
     template <typename a, typename t>
     int StepControlBase<a, t>::getNumSteppers(){
         int len = 0;
-        while(this->motorList[len++] != nullptr);
+        while(this->fullList[len++] != nullptr);
         return len - 1;
     }
 
@@ -98,9 +100,9 @@ namespace TeensyStep
         bool anyTarget = false;
         int i = 0;
         // check if any steppers have more movement enqueued
-        while(this->motorList[i] != nullptr)
+        while(this->fullList[i] != nullptr)
         {
-            anyTarget |= this->motorList[i++]->nextTarget();
+            anyTarget |= this->fullList[i++]->nextTarget();
         }
         return anyTarget;
     }
@@ -116,33 +118,32 @@ namespace TeensyStep
      * \param[out] Number of steppers in resulting list.
      */
     template <typename a, typename t>
-    bool StepControlBase<a, t>::haveWork(Stepper* filteredList[], int &len)
+    bool StepControlBase<a, t>::filterWork(int &len)
     {
         len = 0;
         int maxSteppers = getNumSteppers();
         for (int i = 0; i < maxSteppers; i++)
         {
-            if(this->motorList[i]->vMax == 0 || this->motorList[i]->A == 0)
+            if(this->fullList[i]->vMax == 0 || this->fullList[i]->A == 0)
             {
                 //Serial.printf("Removing stepper index: %d, %s with vMax: %d, steps: %d\r\n", i, this->motorList[i]->name.c_str(), this->motorList[i]->vMax, this->motorList[i]->A);
                 continue;
             }
             //Serial.printf("Stepper %s has work, vMax: %d, steps: %d\r\n", this->motorList[i]->name.c_str(), this->motorList[i]->vMax, this->motorList[i]->A);
-            filteredList[len++] = this->motorList[i];
+            this->motorList[len++] = this->fullList[i];
         }
-        filteredList[len] = nullptr;
+        this->motorList[len] = nullptr;
         return len != 0;
     }
 
     template <typename a, typename t>
     bool StepControlBase<a, t>::doMove(float speedOverride, bool startTimers)
     {
-        Stepper* filteredList[MaxMotors + 1];
         int N = 0;
 
         // Search next target with work if the current loaded target doesn't have any.
         // Duplicated targets and targets will zero speed/distance will be removed.
-        while(!haveWork(filteredList, N))
+        while(!filterWork(N))
         {
             if(!nextTarget())
             {
@@ -152,19 +153,19 @@ namespace TeensyStep
         }
 
         //Calculate Bresenham parameters -------------------------------------
-        std::sort(filteredList, filteredList + N, Stepper::cmpDelta); // The motor which does most steps leads the movement, move to top of list
-        this->leadMotor = filteredList[0];
+        std::sort(this->motorList, this->motorList + N, Stepper::cmpDelta); // The motor which does most steps leads the movement, move to top of list
+        this->leadMotor = this->motorList[0];
        // Serial.printf("Stepper: %s is the leader\r\n", this->leadMotor->name.c_str());
 
         for (int i = 1; i < N; i++)
         {
-            filteredList[i]->B = 2 * filteredList[i]->A - this->leadMotor->A;
+            this->motorList[i]->B = 2 * this->motorList[i]->A - this->leadMotor->A;
         }
         // Calculate acceleration parameters --------------------------------
-        uint32_t targetSpeed = std::abs((*std::min_element(filteredList, filteredList + N, Stepper::cmpVmin))->vMax) * speedOverride; // use the lowest max frequency for the move, scale by relSpeed
+        uint32_t targetSpeed = std::abs((*std::min_element(this->motorList, this->motorList + N, Stepper::cmpVmin))->vMax) * speedOverride; // use the lowest max frequency for the move, scale by relSpeed
         uint32_t pullInSpeed = this->leadMotor->vPullIn;
         uint32_t pullOutSpeed = this->leadMotor->vPullOut;
-        uint32_t acceleration = (*std::min_element(filteredList, filteredList + N, Stepper::cmpAcc))->a; // use the lowest acceleration for the move
+        uint32_t acceleration = (*std::min_element(this->motorList, this->motorList + N, Stepper::cmpAcc))->a; // use the lowest acceleration for the move
 
         // Start move--------------------------
         // it's important that prepareMovement doesn't return vs = 0 here when running a motion as it will cause the stepper interrupt to end and the timers won't restart
@@ -210,6 +211,12 @@ namespace TeensyStep
     void StepControlBase<a, t>::moveAsync(float speedOverride, Steppers&... steppers)
     {
         this->attachStepper(steppers...);
+        int i = 0;
+        while(this->motorList[i] != nullptr){
+            fullList[i] = this->motorList[i];
+            i++;
+        }
+        this->fullList[i] = nullptr;
         doMove(speedOverride);
     }
 
@@ -218,6 +225,12 @@ namespace TeensyStep
     void StepControlBase<a, t>::moveAsync(float speedOverride, Stepper* (&motors)[N]) //move up to maxMotors motors synchronously
     {
         this->attachStepper(motors);
+        int i = 0;
+        while(this->motorList[i] != nullptr){
+            this->fullList[i] = this->motorList[i];
+            i++;
+        }
+        this->fullList[i] = nullptr;
         doMove(speedOverride);
     }
 
