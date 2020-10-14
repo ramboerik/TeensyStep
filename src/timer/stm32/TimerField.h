@@ -99,11 +99,7 @@ void TimerField::setPulseWidth(unsigned pulseWidth)
 
 void TimerField::setStepFrequency(unsigned f)
 {
-  if(f == 0){
-    stepTimerStop();
-    return;
-  }
-  stepTimer.setOverflow(f, HERTZ_FORMAT);
+  f == 0 ? end() : stepTimer.setOverflow(f, HERTZ_FORMAT);
 }
 
 bool TimerField::begin()
@@ -117,6 +113,7 @@ void TimerField::end()
   stepTimer.pause();
   accTimer.pause();
   pulseTimer.pause();
+  stepTimerRunning = false;
 }
 
 void TimerField::endAfterPulse()
