@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include "ErrorHandler.h"
 #include "Stepper.h"
 #include "timer/TF_Handler.h"
@@ -44,7 +45,10 @@ namespace TeensyStep{
         void stepTimerISR();
         void pulseTimerISR();
 
-        Stepper* motorList[MaxMotors + 1];
+        std::array<Stepper*, MaxMotors> motorList;
+        unsigned numSteppers = 0;
+        unsigned insertPos = 0;
+
         Stepper* leadMotor;
 
         void (*callback)() = nullptr;
@@ -55,8 +59,6 @@ namespace TeensyStep{
         }
 
         bool OK = false;
-
-        unsigned mCnt;
 
         enum class Mode {
             target,
@@ -94,7 +96,7 @@ namespace TeensyStep{
 
     template <typename t>
     MotorControlBase<t>::MotorControlBase(unsigned pulseWidth, unsigned accUpdatePeriod)
-        : timerField(this), mCnt(0)
+        : timerField(this)
     {
         timerField.setPulseWidth(pulseWidth);
         timerField.setAccUpdatePeriod(accUpdatePeriod);
@@ -113,16 +115,15 @@ namespace TeensyStep{
     void MotorControlBase<t>::stepTimerISR()
     {
         leadMotor->doStep(); // move master motor
-
-        Stepper** slave = motorList;
-        while (*(++slave) != nullptr) // move slave motors if required (https://en.wikipedia.org/wiki/Bresenham)
+        for(unsigned i = 1; i < numSteppers; i++) // move slave motors if required (https://en.wikipedia.org/wiki/Bresenham)
         {
-            if ((*slave)->B >= 0)
+            Stepper* slave = motorList[i];
+            if (slave->B >= 0)
             {
-                (*slave)->doStep();
-                (*slave)->B -= leadMotor->A;
+                slave->doStep();
+                slave->B -= leadMotor->A;
             }
-            (*slave)->B += (*slave)->A;
+            slave->B += slave->A;
         }
         timerField.triggerDelay(); // start delay line to dactivate all step pins
 
@@ -138,19 +139,18 @@ namespace TeensyStep{
     template <typename t>
     void MotorControlBase<t>::pulseTimerISR()
     {
-        Stepper** motor = motorList;
-        while ((*motor) != nullptr)
+        for(const auto& stepper: motorList)
         {
-            (*motor++)->clearStepPin();
+            stepper->clearStepPin();
         }
     }
 
     template <typename t>
     void MotorControlBase<t>::attachStepper(Stepper& stepper)
     {
-        motorList[mCnt++] = &stepper;
-        motorList[mCnt] = nullptr;
-        mCnt = 0;
+        motorList[insertPos++] = &stepper;
+        numSteppers = insertPos;
+        insertPos = 0;
     }
 
     template <typename t>
@@ -158,22 +158,17 @@ namespace TeensyStep{
     void MotorControlBase<t>::attachStepper(Stepper& stepper, Steppers&... steppers)
     {
         static_assert(sizeof...(steppers) < MaxMotors, "Too many motors used. Please increase MaxMotors in file MotorControlBase.h");
-
-        motorList[this->mCnt++] = &stepper;
+        motorList[insertPos++] = &stepper;
         attachStepper(steppers...);
     }
 
     template <typename t>
     template <size_t N>
-    void MotorControlBase<t>::attachStepper(Stepper* (&motors)[N])
+    void MotorControlBase<t>::attachStepper(Stepper* (&steppers)[N])
     {
         static_assert(N <= MaxMotors, "Too many motors used. Please increase MaxMotors in file MotorControlBase.h");
-
-        for (size_t i = 0; i < N; i++)
-        {
-            this->motorList[i] = motors[i];
-        }
-        this->motorList[N] = nullptr;
+        std::copy(std::begin(steppers), std::end(steppers), motorList.begin());
+        numSteppers = N;
     }
 
 } // namespace TeensyStep

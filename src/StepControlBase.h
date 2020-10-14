@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MotorControlBase.h"
-#include <algorithm>
+#include <array>
 
 namespace TeensyStep
 {
@@ -60,14 +60,13 @@ namespace TeensyStep
         void setCallback(void (*_callback)()) { this->callback = _callback; }
 
      protected:
-        Stepper* fullList[MaxMotors + 1];
-
+        std::array<Stepper*, MaxMotors> fullList;
+        unsigned fullListLen = 0;
         void accTimerISR();
 
         bool nextTarget();
-        bool filterWork(int &len);
+        bool filterMotorList();
         bool doMove(float speedOverride = 1.0f, bool startTimers = true);
-        int getNumSteppers();
 
         Accelerator accelerator;
 
@@ -84,95 +83,69 @@ namespace TeensyStep
         this->mode = MotorControlBase<t>::Mode::target;
     }
 
-    template <typename a, typename t>
-    int StepControlBase<a, t>::getNumSteppers(){
-        int len = 0;
-        while(this->fullList[len++] != nullptr);
-        return len - 1;
-    }
-
     /**
-     * \brief Load the next target for all steppers.
+     * \brief Load the next target for all attached steppers.
      * \return True if there are targets left for any stepper, false if there is nothing more to do.
      */
     template <typename a, typename t>
     bool StepControlBase<a, t>::nextTarget(){
         bool anyTarget = false;
-        int i = 0;
         // check if any steppers have more movement enqueued
-        while(this->fullList[i] != nullptr)
+        for(unsigned i = 0; i < this->fullListLen; i++)
         {
-            anyTarget |= this->fullList[i++]->nextTarget();
+            anyTarget |= this->fullList[i]->nextTarget();
         }
         return anyTarget;
     }
 
     /**
-     * \brief Iterate attached steppers and generate a filtered list that only contains
-     *        the steppers that will move. Steppers that already are at their target or have
-     *        zero speed will be filtered out. This is an optimization of cases when
-     *        steppers with slow target speed otherwise would determine/limit the max speed for all
-     *        other steppers during the move.
-     * \param[out] Resulting list of steppers, Must be of length MaxMotors + 1. The last element
-     *             in the  list will be nullptr.
-     * \param[out] Number of steppers in resulting list.
+     * \brief Iterate attached steppers and remove steppers with no steps/speed. Steppers that already are at their target or have
+     *        zero speed will be removed. This is an optimization of cases when
+     *        steppers with slow target speed otherwise would determine/limit the max speed for all other steppers.
+     * \param[out] True if there is movement to do, false if nothing to do.
      */
     template <typename a, typename t>
-    bool StepControlBase<a, t>::filterWork(int &len)
+    bool StepControlBase<a, t>::filterMotorList()
     {
-        len = 0;
-        int maxSteppers = getNumSteppers();
-        for (int i = 0; i < maxSteppers; i++)
-        {
-            if(this->fullList[i]->vMax == 0 || this->fullList[i]->A == 0)
-            {
-                //Serial.printf("Removing stepper index: %d, %s with vMax: %d, steps: %d\r\n", i, this->motorList[i]->name.c_str(), this->motorList[i]->vMax, this->motorList[i]->A);
-                continue;
-            }
-            //Serial.printf("Stepper %s has work, vMax: %d, steps: %d\r\n", this->motorList[i]->name.c_str(), this->motorList[i]->vMax, this->motorList[i]->A);
-            this->motorList[len++] = this->fullList[i];
-        }
-        this->motorList[len] = nullptr;
-        return len != 0;
+        auto end = std::copy_if(this->fullList.begin(), this->fullList.begin() + this->fullListLen, this->motorList.begin(), [](Stepper*s) {return s->vMax != 0 && s->A != 0; });
+        this->numSteppers = std::distance(this->motorList.begin(), end);
+        return this->numSteppers != 0;
     }
 
     template <typename a, typename t>
     bool StepControlBase<a, t>::doMove(float speedOverride, bool startTimers)
     {
-        int N = 0;
-
         // Search next target with work if the current loaded target doesn't have any.
-        // Duplicated targets and targets will zero speed/distance will be removed.
-        while(!filterWork(N))
+        while(!filterMotorList())
         {
             if(!nextTarget())
             {
-                // no more work or targets, time to end movement.
-                return false;
+                return false; // no more work or targets, time to end movement.
             }
         }
 
         //Calculate Bresenham parameters -------------------------------------
-        std::sort(this->motorList, this->motorList + N, Stepper::cmpDelta); // The motor which does most steps leads the movement, move to top of list
+        std::sort(this->motorList.begin(), this->motorList.begin() + this->numSteppers, Stepper::cmpDelta); // The motor which does most steps leads the movement, move to top of list
         this->leadMotor = this->motorList[0];
-       // Serial.printf("Stepper: %s is the leader\r\n", this->leadMotor->name.c_str());
+        //Serial.printf("Stepper: %s is the leader\r\n", this->leadMotor->name.c_str());
 
-        for (int i = 1; i < N; i++)
+        for (unsigned i = 1; i < this->numSteppers; i++)
         {
             this->motorList[i]->B = 2 * this->motorList[i]->A - this->leadMotor->A;
         }
         // Calculate acceleration parameters --------------------------------
-        uint32_t targetSpeed = std::abs((*std::min_element(this->motorList, this->motorList + N, Stepper::cmpVmin))->vMax) * speedOverride; // use the lowest max frequency for the move, scale by relSpeed
+        uint32_t targetSpeed = std::abs((*std::min_element(this->motorList.begin(), this->motorList.begin() + this->numSteppers, Stepper::cmpVmin))->vMax) * speedOverride; // use the lowest max frequency for the move, scale by relSpeed
         uint32_t pullInSpeed = this->leadMotor->vPullIn;
         uint32_t pullOutSpeed = this->leadMotor->vPullOut;
-        uint32_t acceleration = (*std::min_element(this->motorList, this->motorList + N, Stepper::cmpAcc))->a; // use the lowest acceleration for the move
+        uint32_t acceleration = (*std::min_element(this->motorList.begin(), this->motorList.begin() + this->numSteppers, Stepper::cmpAcc))->a; // use the lowest acceleration for the move
 
         // Start move--------------------------
         // it's important that prepareMovement doesn't return vs = 0 here when running a motion as it will cause the stepper interrupt to end and the timers won't restart
         // This seems to not happen when running in the old target mode as the stop is returned before the timers are started.
         // A  workaround for now  is to never use vs = 0 in a motion chain.
         this->timerField.setStepFrequency(accelerator.prepareMovement(this->leadMotor->current, this->leadMotor->target, targetSpeed, pullInSpeed, pullOutSpeed, acceleration));
-        if(startTimers){
+        if(startTimers)
+        {
             this->timerField.begin();
             this->timerField.stepTimerStart();
             this->timerField.accTimerStart();
@@ -211,12 +184,8 @@ namespace TeensyStep
     void StepControlBase<a, t>::moveAsync(float speedOverride, Steppers&... steppers)
     {
         this->attachStepper(steppers...);
-        int i = 0;
-        while(this->motorList[i] != nullptr){
-            fullList[i] = this->motorList[i];
-            i++;
-        }
-        this->fullList[i] = nullptr;
+        this->fullList = this->motorList;
+        this->fullListLen = this->numSteppers;
         doMove(speedOverride);
     }
 
@@ -225,12 +194,8 @@ namespace TeensyStep
     void StepControlBase<a, t>::moveAsync(float speedOverride, Stepper* (&motors)[N]) //move up to maxMotors motors synchronously
     {
         this->attachStepper(motors);
-        int i = 0;
-        while(this->motorList[i] != nullptr){
-            this->fullList[i] = this->motorList[i];
-            i++;
-        }
-        this->fullList[i] = nullptr;
+        this->fullList = this->motorList;
+        this->fullListLen = this->numSteppers;
         doMove(speedOverride);
     }
 
