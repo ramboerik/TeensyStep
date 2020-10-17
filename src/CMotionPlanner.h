@@ -16,23 +16,28 @@ namespace TeensyStep
             Target targetsX[maxSize];
             Target targetsY[maxSize];
             Target targetsZ[maxSize];
-            unsigned numTargets;
-            int speed;
-            int acc;
+            unsigned numTargets = 0;
 
-            static constexpr int default_pullin = 100;
+            int speed = Stepper::vMaxDefault;
+            int pullInOutSpeed = Stepper::vPullInOutDefault;
 
         public:
             // Actual speed will be in the interval [speed, sqrt(2)*speed] as the speed in
             // separated in x and y component.
             // lowest speed is reached when only one axis run.
             // max speed is reached when both axis run equal length.
-            void setSpeed(int s) { speed = s; }
-            void setAcceleration(int a) {acc = a; }
             unsigned size() { return numTargets; }
 
-            CMotionPlanner(Stepper &stepperX, Stepper &stepperY, Stepper &stepperZ, int speed, int acc) :
-                stepperX(stepperX), stepperY(stepperY), stepperZ(stepperZ), numTargets(0), speed(speed), acc(acc){
+            CMotionPlanner& setSpeed(int s)
+            {
+                speed = s;
+                return *this;
+            }
+
+            CMotionPlanner& setPullinOutSpeed(int s)
+            {
+                pullInOutSpeed = s;
+                return *this;
             }
 
             /**
@@ -101,9 +106,9 @@ namespace TeensyStep
                 else
                 {
                     // the change in motion angle is too large, we need to slow down
-                    x.setSpeeds(speed_x, pullin_x, default_pullin);
-                    y.setSpeeds(speed_y, pullin_y, default_pullin);
-                    pullin_x = pullin_y = default_pullin;
+                    x.setSpeeds(speed_x, pullin_x, pullInOutSpeed);
+                    y.setSpeeds(speed_y, pullin_y, pullInOutSpeed);
+                    pullin_x = pullin_y = pullInOutSpeed;
                 }
             }
 
@@ -121,9 +126,6 @@ namespace TeensyStep
              *          targets: 1,1), (10,10)
              *          => Ve won't be reached when moving from (0,0) -> (1,1) but is set as start speed(vs) when starting with movement from (1,1) ->
              *          (10,10). This causes the steppers to accelerate from pullin speed to 500 in one step.
-             *
-             *        TODO:
-             *        * Bug, the steppers do one step backwards and forwards when giving same point as target multiple times.
              */
             void calculate(){
                 int next_pullin_x = default_pullin, next_pullin_y = default_pullin;
