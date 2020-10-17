@@ -106,8 +106,8 @@ namespace TeensyStep
     void Stepper::loadTarget(const Target& t)
     {
         //Serial.printf("Loading target %d, index: %d of total: %d\r\n", t.target, t_index, targets.size());
-        setMaxSpeed(t.speed);
-        setPullInOutSpeed(t.vPullIn, t.vPullOut);
+        setMaxSpeed(t.speed * vMax);
+        setPullInOutSpeed(vPullIn + t.vPullIn*(vMax - vPullIn), vPullOut + t.vPullOut*(vMax - vPullOut));
         t.absPos ? setTargetAbs(t.target) : setTargetRel(t.target);
     }
 

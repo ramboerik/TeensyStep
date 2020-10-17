@@ -5,18 +5,30 @@ namespace TeensyStep
     class Target
     {
     public:
-        Target(int32_t target = 0, int32_t speed = 0, int32_t vPullIn = -1, int32_t vPullOut = -1, bool absPos = true) :
+        Target(int32_t target = 0, float speed = 1, float vPullIn = 0, float vPullOut = 0, bool absPos = true) :
             target(target), speed(speed), vPullIn(vPullIn), vPullOut(vPullOut), absPos(absPos) {}
         int32_t target;
-        int32_t speed;
-        int32_t vPullIn;
-        int32_t vPullOut;
+        float speed;
+        float vPullIn;
+        float vPullOut;
         bool absPos;
 
-        void setSpeeds(int speed, int vPullIn, int vPullOut){
-            this->speed = speed;
-            this->vPullIn = vPullIn;
-            this->vPullOut = vPullOut;
+        /**
+         * \brief Set scale factors for target speed, pullin speed and pullout speed.
+         *        speed:
+         *              0.0 = zero speed
+         *              1.0 = vMax
+         *        vPullIn:
+         *                0.0: vPullIn
+         *                1.0: vMax
+         *        vPullOut:
+         *                0.0: vPullOut
+         *                1.0: vMax
+         */
+        void setSpeedFactors(float speed, float vPullIn, float vPullOut){
+            this->speed = std::min(1.f, speed);
+            this->vPullIn = std::min(1.f, vPullIn);
+            this->vPullOut = std::min(1.f, vPullOut);
         }
     };
 }

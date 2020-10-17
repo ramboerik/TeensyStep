@@ -14,8 +14,7 @@ namespace TeensyStep
             Target targetsZ[maxSize];
             unsigned numTargets = 0;
 
-            int speed = Stepper::vMaxDefault;
-            int pullInOutSpeed = Stepper::vPullInOutDefault;
+            float speed = 1.0;
 
         public:
             // Actual speed will be in the interval [speed, sqrt(2)*speed] as the speed in
@@ -27,18 +26,6 @@ namespace TeensyStep
             Target* getX(){ return targetsX; }
             Target* getY(){ return targetsY; }
             Target* getZ(){ return targetsZ; }
-
-            MotionPlanner& setSpeed(int s)
-            {
-                speed = s;
-                return *this;
-            }
-
-            MotionPlanner& setPullinOutSpeed(int s)
-            {
-                pullInOutSpeed = s;
-                return *this;
-            }
 
             /**
              * \brief Add point to motion.
@@ -93,24 +80,24 @@ namespace TeensyStep
              * \param[in/out] pullin_x Pullin X speed to use for the current target. Is also updated to be used for the next target.
              * \param[in/out] pullin_y Pullin Y speed to use for the current target. Is also updated to be used for the next target.
              */
-            void updateTarget(Target& x,  Target& y, float angle, int speed_x, int speed_y, int &pullin_x, int &pullin_y)
+            void updateTarget(Target& x,  Target& y, float angle, float speed_x, float speed_y, float &pullin_x, float &pullin_y)
             {
                 //Serial.printf("Target (x: %d, y: %d), speed_x: %d, speed_y: %d, angle: ", x.target, y.target, speed_x, speed_y);
                 //Serial.println(angle);
                 if(angle < 45)
                 {
                     // the change in motion angle is low, we can keep full speed
-                    x.setSpeeds(speed_x, pullin_x, speed_x);
-                    y.setSpeeds(speed_y, pullin_y, speed_y);
-                    pullin_x = speed_x; // ask stepper for real ve instead of assuming that everything is fine?
-                    pullin_y = speed_y; // ask stepper for real ve instead of assuming that everything is fine?
+                    x.setSpeedFactors(speed_x, pullin_x, speed_x);
+                    y.setSpeedFactors(speed_y, pullin_y, speed_y);
+                    pullin_x = 1.0; // ask stepper for real ve instead of assuming that everything is fine?
+                    pullin_y = 1.0; // ask stepper for real ve instead of assuming that everything is fine?
                 }
                 else
                 {
                     // the change in motion angle is too large, we need to slow down
-                    x.setSpeeds(speed_x, pullin_x, pullInOutSpeed);
-                    y.setSpeeds(speed_y, pullin_y, pullInOutSpeed);
-                    pullin_x = pullin_y = pullInOutSpeed;
+                    x.setSpeedFactors(speed_x, pullin_x, 0);
+                    y.setSpeedFactors(speed_y, pullin_y, 0);
+                    pullin_x = pullin_y = 0;
                 }
             }
 
@@ -131,8 +118,8 @@ namespace TeensyStep
              */
             void calculate(int posX, int posY, int posZ)
             {
-                int next_pullin_x = pullInOutSpeed, next_pullin_y = pullInOutSpeed;
-                int speed_x = speed, speed_y = speed;
+                float next_pullin_x = 0;
+                float next_pullin_y = 0;
                 if(numTargets == 0){
                     return;
                 }
@@ -142,7 +129,7 @@ namespace TeensyStep
                 int y0 = targetsY[0].target - posY;
                 float angle = getAngle(posX, posY, x0, y0);
                 //getSpeed(x0, y0, speed_x, speed_y);
-                updateTarget(targetsX[0], targetsY[0], angle, speed_x, speed_y, next_pullin_x, next_pullin_y);
+                updateTarget(targetsX[0], targetsY[0], angle, 1.0, 1.0, next_pullin_x, next_pullin_y);
 
                 // quit if there's only one target
                 if(numTargets < 2){
@@ -158,13 +145,13 @@ namespace TeensyStep
 
                     angle = getAngle(x0, y0, x1, y1);
                     //getSpeed(x1, y1, speed_x, speed_y);
-                    updateTarget(targetsX[i], targetsY[i], angle, speed_x, speed_y, next_pullin_x, next_pullin_y);
+                    updateTarget(targetsX[i], targetsY[i], angle, 1.0, 1.0, next_pullin_x, next_pullin_y);
                     x0 = x1;
                     y0 = y1;
                 }
                 // Add last point, always slow down
                 //getSpeed(targets[i]->x - targets[i - 1]->x, targets[i]->y - targets[i - 1]->y, speed_x, speed_y);
-                updateTarget(targetsX[i], targetsY[i], 90, speed_x, speed_y, next_pullin_x, next_pullin_y);
+                updateTarget(targetsX[i], targetsY[i], 90, 1.0, 1.0, next_pullin_x, next_pullin_y);
             }
     };
 }
