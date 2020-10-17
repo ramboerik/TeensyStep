@@ -6,7 +6,7 @@
 namespace TeensyStep
 {
     template<unsigned N = 100>
-    class CMotionPlanner{
+    class MotionPlanner{
         protected:
             static constexpr unsigned maxSize = N;
             Target targetsX[maxSize];
@@ -28,13 +28,13 @@ namespace TeensyStep
             Target* getY(){ return targetsY; }
             Target* getZ(){ return targetsZ; }
 
-            CMotionPlanner& setSpeed(int s)
+            MotionPlanner& setSpeed(int s)
             {
                 speed = s;
                 return *this;
             }
 
-            CMotionPlanner& setPullinOutSpeed(int s)
+            MotionPlanner& setPullinOutSpeed(int s)
             {
                 pullInOutSpeed = s;
                 return *this;
