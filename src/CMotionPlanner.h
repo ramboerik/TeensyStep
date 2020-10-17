@@ -6,9 +6,10 @@
 namespace TeensyStep
 {
 
-    template<unsigned maxSize = 100>
+    template<unsigned N = 100>
     class CMotionPlanner{
-        private:
+        protected:
+            static constexpr unsigned maxSize = N;
             Stepper& stepperX;
             Stepper& stepperY;
             Stepper& stepperZ;
