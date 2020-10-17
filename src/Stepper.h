@@ -65,6 +65,8 @@ namespace TeensyStep
         static bool cmpAcc(const Stepper* a, const Stepper* b) { return a->a < b->a; }
         static bool cmpVmin(const Stepper* a, const Stepper* b) { return std::abs(a->vMax) < std::abs(b->vMax); }
         static bool cmpVmax(const Stepper* a, const Stepper* b) { return std::abs(a->vMax) > std::abs(b->vMax); }
+        static bool cmpPullIn(const Stepper* a, const Stepper* b) { return a->vPullIn > b->vPullIn; }
+        static bool cmpPullOut(const Stepper* a, const Stepper* b) { return a->vPullOut > b->vPullOut; }
 
         // Pin & Dir registers
 #if defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK64FX512__) || defined(__MK66FX1M0__)

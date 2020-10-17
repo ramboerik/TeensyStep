@@ -135,8 +135,8 @@ namespace TeensyStep
         }
         // Calculate acceleration parameters --------------------------------
         uint32_t targetSpeed = std::abs((*std::min_element(this->motorList.begin(), this->motorList.begin() + this->numSteppers, Stepper::cmpVmin))->vMax) * speedOverride; // use the lowest max frequency for the move, scale by relSpeed
-        uint32_t pullInSpeed = this->leadMotor->vPullIn;
-        uint32_t pullOutSpeed = this->leadMotor->vPullOut;
+        uint32_t pullInSpeed = (*std::min_element(this->motorList.begin(), this->motorList.begin() + this->numSteppers, Stepper::cmpPullIn))->vPullIn;
+        uint32_t pullOutSpeed = (*std::min_element(this->motorList.begin(), this->motorList.begin() + this->numSteppers, Stepper::cmpPullOut))->vPullOut;
         uint32_t acceleration = (*std::min_element(this->motorList.begin(), this->motorList.begin() + this->numSteppers, Stepper::cmpAcc))->a; // use the lowest acceleration for the move
 
         // Start move--------------------------

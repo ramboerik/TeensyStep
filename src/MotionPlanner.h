@@ -9,12 +9,11 @@ namespace TeensyStep
     class MotionPlanner{
         protected:
             static constexpr unsigned maxSize = N;
+            unsigned numTargets = 0;
+            float speed = 1.0;
             Target targetsX[maxSize];
             Target targetsY[maxSize];
             Target targetsZ[maxSize];
-            unsigned numTargets = 0;
-
-            float speed = 1.0;
 
         public:
             // Actual speed will be in the interval [speed, sqrt(2)*speed] as the speed in
