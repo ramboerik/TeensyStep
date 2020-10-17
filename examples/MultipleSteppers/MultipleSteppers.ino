@@ -1,15 +1,15 @@
 /*==========================================================================
- * The sketch shows how to move more than one motor. 
- * 
- * If more than one motor is moved by one controller all motors will arrive at 
- * their targets at the same time. E.g., if the motors are part of a 
+ * The sketch shows how to move more than one motor.
+ *
+ * If more than one motor is moved by one controller all motors will arrive at
+ * their targets at the same time. E.g., if the motors are part of a
  * x/y transport system, the transport move on a straight diagonal line to the
  * target coordinates.
- * 
+ *
  * The sketch also shows examples how the motor properties are set up
  *
- * A 1/16 microstep driver is assumed. You probably want to adjust speed, 
- * acceleration and distances if you are using a driver with another microstep 
+ * A 1/16 microstep driver is assumed. You probably want to adjust speed,
+ * acceleration and distances if you are using a driver with another microstep
  * resolution.
  ===========================================================================*/
 
@@ -23,38 +23,38 @@ StepControl controller;
 
 void setup()
 {
-  // setup the motors 
+  // setup the motors
    motor_1
     .setMaxSpeed(50000)       // steps/s
-    .setAcceleration(200000); // steps/s^2 
-  
+    .setAcceleration(200000); // steps/s^2
+
   motor_2
     .setMaxSpeed(50000)       // steps/s
-    .setAcceleration(200000); // steps/s^2 
+    .setAcceleration(200000); // steps/s^2
   motor_3
     //.setPullInOutSpeed(300, 300)  // steps/s     currently deactivated...
     .setMaxSpeed(10000)       // steps/s
-    .setAcceleration(50000)   // steps/s^2     
+    .setAcceleration(50000)   // steps/s^2
     .setStepPinPolarity(LOW); // driver expects active low pulses
 }
 
-void loop() 
-{  
+void loop()
+{
   constexpr int spr = 16*200;  // 3200 steps per revolution
-  
-  // lets shake    
+
+  // lets shake
   for(int i = 0; i < 5; i++)
   {
     motor_1.setTargetRel(spr/4); // 1/4 revolution
-    controller.move(motor_1);  
+    controller.move(motor_1);
 
     motor_1.setTargetRel(-spr/4);
-    controller.move(motor_1);  
+    controller.move(motor_1);
   }
   delay(500);
-  
+
   // move motor_1 to absolute position (10 revolutions from zero)
-  // move motor_2 half a revolution forward  
+  // move motor_2 half a revolution forward
   // both motors will arrive their target positions at the same time
   motor_1.setTargetAbs(10*spr);
   motor_2.setTargetRel(spr/2);
@@ -70,6 +70,6 @@ void loop()
   motor_2.setTargetAbs(0);
   motor_3.setTargetAbs(0);
   controller.move(motor_1, motor_2, motor_3);
- 
+
   delay(1000);
 }
