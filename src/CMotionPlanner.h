@@ -5,14 +5,10 @@
 
 namespace TeensyStep
 {
-
     template<unsigned N = 100>
     class CMotionPlanner{
         protected:
             static constexpr unsigned maxSize = N;
-            Stepper& stepperX;
-            Stepper& stepperY;
-            Stepper& stepperZ;
             Target targetsX[maxSize];
             Target targetsY[maxSize];
             Target targetsZ[maxSize];
@@ -27,6 +23,10 @@ namespace TeensyStep
             // lowest speed is reached when only one axis run.
             // max speed is reached when both axis run equal length.
             unsigned size() { return numTargets; }
+
+            Target* getX(){ return targetsX; }
+            Target* getY(){ return targetsY; }
+            Target* getZ(){ return targetsZ; }
 
             CMotionPlanner& setSpeed(int s)
             {
@@ -73,7 +73,8 @@ namespace TeensyStep
              * \param[out] speed_x Output x axis speed
              * \param[out] speed_y Output y axis speed
              */
-            void getSpeed(int delta_x, int delta_y, int &speed_x, int &speed_y){
+            void getSpeed(int delta_x, int delta_y, int &speed_x, int &speed_y)
+            {
                 float len = sqrtf(delta_x*delta_x + delta_y*delta_y);
                 speed_x = std::abs(static_cast<int>(speed*(delta_x/len)));
                 speed_y = std::abs(static_cast<int>(speed*(delta_y/len)));
@@ -92,7 +93,8 @@ namespace TeensyStep
              * \param[in/out] pullin_x Pullin X speed to use for the current target. Is also updated to be used for the next target.
              * \param[in/out] pullin_y Pullin Y speed to use for the current target. Is also updated to be used for the next target.
              */
-            void updateTarget(Target& x,  Target& y, float angle, int speed_x, int speed_y, int &pullin_x, int &pullin_y){
+            void updateTarget(Target& x,  Target& y, float angle, int speed_x, int speed_y, int &pullin_x, int &pullin_y)
+            {
                 //Serial.printf("Target (x: %d, y: %d), speed_x: %d, speed_y: %d, angle: ", x.target, y.target, speed_x, speed_y);
                 //Serial.println(angle);
                 if(angle < 45)
@@ -127,24 +129,23 @@ namespace TeensyStep
              *          => Ve won't be reached when moving from (0,0) -> (1,1) but is set as start speed(vs) when starting with movement from (1,1) ->
              *          (10,10). This causes the steppers to accelerate from pullin speed to 500 in one step.
              */
-            void calculate(){
-                int next_pullin_x = default_pullin, next_pullin_y = default_pullin;
+            void calculate(int posX, int posY, int posZ)
+            {
+                int next_pullin_x = pullInOutSpeed, next_pullin_y = pullInOutSpeed;
                 int speed_x = speed, speed_y = speed;
                 if(numTargets == 0){
                     return;
                 }
 
                 // First point, we must take the current stepper position into consideration.
-                int x0 = targetsX[0].target - stepperX.getPosition();
-                int y0 = targetsY[0].target - stepperY.getPosition();
-                float angle = getAngle(stepperX.getPosition(), stepperY.getPosition(), x0, y0);
+                int x0 = targetsX[0].target - posX;
+                int y0 = targetsY[0].target - posY;
+                float angle = getAngle(posX, posY, x0, y0);
                 //getSpeed(x0, y0, speed_x, speed_y);
                 updateTarget(targetsX[0], targetsY[0], angle, speed_x, speed_y, next_pullin_x, next_pullin_y);
 
                 // quit if there's only one target
                 if(numTargets < 2){
-                    stepperX.setTargets(targetsX, numTargets);
-                    stepperY.setTargets(targetsY, numTargets);
                     return;
                 }
 
@@ -164,8 +165,6 @@ namespace TeensyStep
                 // Add last point, always slow down
                 //getSpeed(targets[i]->x - targets[i - 1]->x, targets[i]->y - targets[i - 1]->y, speed_x, speed_y);
                 updateTarget(targetsX[i], targetsY[i], 90, speed_x, speed_y, next_pullin_x, next_pullin_y);
-                stepperX.setTargets(targetsX, numTargets);
-                stepperY.setTargets(targetsY, numTargets);
             }
     };
 }
