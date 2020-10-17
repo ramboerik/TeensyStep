@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <string>
-#include <vector>
+#include "Target.h"
 
 namespace TeensyStep
 {
@@ -28,8 +28,7 @@ namespace TeensyStep
 
         virtual void setTargetAbs(int32_t pos);   // Set target position absolute
         virtual void setTargetRel(int32_t delta); // Set target position relative to current position
-        bool addTargetAbs(int32_t pos, int32_t speed = 0, int32_t pullIn = 0, int32_t pullOut = 0);
-        bool addTargetRel(int32_t delta, int32_t speed = 0, int32_t pullIn = 0, int32_t pullOut = 0);
+        void setTargets(const Target *targets, unsigned len);
         bool nextTarget();
         void repeatTargets();
         void removeTargets();
@@ -39,19 +38,6 @@ namespace TeensyStep
         int32_t dir;
 
      protected:
-        // Internal representation of a target
-        class Target
-        {
-        public:
-            Target(int32_t target, int32_t speed = 0, int32_t vPullIn = -1, int32_t vPullOut = -1, bool absPos = false) :
-                target(target), speed(speed), vPullIn(vPullIn), vPullOut(vPullOut), absPos(absPos) {}
-            int32_t target;
-            int32_t speed;
-            int32_t vPullIn;
-            int32_t vPullOut;
-            bool absPos = false;
-        };
-
         void loadTarget(const Target& t);
 
         inline void doStep();
@@ -64,8 +50,9 @@ namespace TeensyStep
         volatile int32_t current;
         volatile int32_t currentSpeed;
         volatile int32_t target;
-        std::vector<Target*> targets;
-        unsigned t_index = 0;
+        const Target* targets;
+        unsigned targetsLen = 0;
+        unsigned targetsPos = 0;
 
         int32_t A, B; // Bresenham paramters
         int32_t vMax;

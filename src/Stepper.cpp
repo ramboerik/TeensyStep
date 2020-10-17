@@ -4,7 +4,7 @@
 namespace TeensyStep
 {
     Stepper::Stepper(const int _stepPin, const int _dirPin, const char* name)
-        : current(0), t_index(0), stepPin(_stepPin), dirPin(_dirPin), name(name)
+        : current(0), targetsLen(0), targetsPos(0), stepPin(_stepPin), dirPin(_dirPin), name(name)
     {
         setStepPinPolarity(HIGH);
         setInverseRotation(false);
@@ -109,68 +109,27 @@ namespace TeensyStep
         if(t.speed != 0) setMaxSpeed(t.speed);
         setPullInOutSpeed(t.vPullIn, t.vPullOut);
         t.absPos ? setTargetAbs(t.target) : setTargetRel(t.target);
-        t_index++;
     }
 
-    bool Stepper::addTargetAbs(int32_t pos, int32_t speed, int32_t pullIn, int32_t pullOut)
+    void Stepper::setTargets(const Target *t, unsigned len)
     {
-        Target *t = new Target(pos, speed, pullIn, pullOut, true);
-        if(!t)
-        {
-            return false;
-        }
+        if(len == 0) return;
+        targets = t;
+        targetsLen = len;
+        targetsPos = 0;
         // Make sure the first target is loaded for the move call
-        if(targets.size() == 0)
-        {
-            loadTarget(*t);
-        }
-        targets.push_back(t);
-        return true;
-    }
-
-    bool Stepper::addTargetRel(int32_t delta, int32_t speed, int32_t pullIn, int32_t pullOut)
-    {
-        Target *t = new Target(delta, speed, pullIn, pullOut);
-        if(!t)
-        {
-            return false;
-        }
-        // Make sure the first target is loaded for the move call
-        if(targets.size() == 0)
-        {
-            loadTarget(*t);
-        }
-        targets.push_back(t);
-        return true;
-    }
-
-    void Stepper::repeatTargets()
-    {
-        t_index = 0;
-        // Reload the first target in the list
-        if(targets.size() > 0)
-        {
-            loadTarget(*targets[0]);
-        }
-    }
-
-    void Stepper::removeTargets(){
-        t_index = 0;
-        for(auto it = targets.begin(); it != targets.end();)
-        {
-            it = targets.erase(it);
-        }
+        loadTarget(targets[targetsPos++]);
     }
 
     bool Stepper::nextTarget()
     {
-        if(t_index >= targets.size())
+        if(targetsPos >= targetsLen)
         {
             A = 0; // set number of steps to zero to flag that there is no more work
                    // to do for this stepper
             return false;
         }
-        loadTarget(*targets[t_index]);
+        loadTarget(targets[targetsPos++]);
         return true;
     }
 }
