@@ -32,7 +32,7 @@ void setup()
     .setMaxSpeed(50000)       // steps/s
     .setAcceleration(200000); // steps/s^2 
   motor_3
-    //.setPullInSpeed(300)      // steps/s     currently deactivated...
+    //.setPullInOutSpeed(300, 300)  // steps/s     currently deactivated...
     .setMaxSpeed(10000)       // steps/s
     .setAcceleration(50000)   // steps/s^2     
     .setStepPinPolarity(LOW); // driver expects active low pulses

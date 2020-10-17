@@ -10,7 +10,7 @@ namespace TeensyStep
         setInverseRotation(false);
         setAcceleration(aDefault);
         setMaxSpeed(vMaxDefault);
-        setPullInSpeed(vPullInOutDefault);
+        setPullInOutSpeed(vPullInOutDefault, vPullInOutDefault);
 
         pinMode(stepPin, OUTPUT);
         pinMode(dirPin, OUTPUT);
@@ -81,14 +81,20 @@ namespace TeensyStep
 
     Stepper& Stepper::setPullInSpeed(int32_t speed)
     {
-        return setPullInOutSpeed(speed, speed);
+        vPullIn = std::abs(speed);
+        return *this;
+    }
+
+    Stepper& Stepper::setPullOutSpeed(int32_t speed)
+    {
+        vPullOut = std::abs(speed);
+        return *this;
     }
 
     Stepper& Stepper::setPullInOutSpeed(int32_t pullInSpeed, int32_t pullOutSpeed)
     {
-        vPullIn = std::abs(pullInSpeed);
-        vPullOut = std::abs(pullOutSpeed);
-        return *this;
+        setPullInSpeed(pullInSpeed);
+        return setPullOutSpeed(pullOutSpeed);
     }
 
     void Stepper::setTargetAbs(int32_t target)
