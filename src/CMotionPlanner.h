@@ -29,6 +29,7 @@ namespace TeensyStep
             // max speed is reached when both axis run equal length.
             void setSpeed(int s) { speed = s; }
             void setAcceleration(int a) {acc = a; }
+            unsigned size() { return numTargets; }
 
             CMotionPlanner(Stepper &stepperX, Stepper &stepperY, Stepper &stepperZ, int speed, int acc) :
                 stepperX(stepperX), stepperY(stepperY), stepperZ(stepperZ), numTargets(0), speed(speed), acc(acc){
