@@ -21,6 +21,7 @@ namespace TeensyStep
             // lowest speed is reached when only one axis run.
             // max speed is reached when both axis run equal length.
             unsigned size() { return numTargets; }
+            void clear() { numTargets = 0; }
 
             Target* getX(){ return targetsX; }
             Target* getY(){ return targetsY; }
