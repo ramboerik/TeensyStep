@@ -3,6 +3,12 @@
 
 namespace TeensyStep
 {
+    const int32_t Stepper::vMaxMax = 300000;   // largest speed possible (steps/s)
+    const uint32_t Stepper::aMax = 500000;     // speed up to 500kHz within 1 s (steps/s^2)
+    const uint32_t Stepper::vMaxDefault = 800; // should work with every motor (1 rev/sec in 1/4-step mode)
+    const uint32_t Stepper::vPullInOutDefault = 100;
+    const uint32_t Stepper::aDefault = 2500; // reasonably low (~0.5s for reaching the default speed)
+
     Stepper::Stepper(const int _stepPin, const int _dirPin, const char* name)
         : current(0), targetsLen(0), targetsPos(0), stepPin(_stepPin), dirPin(_dirPin), name(name)
     {
