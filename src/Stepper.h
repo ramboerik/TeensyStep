@@ -59,6 +59,7 @@ namespace TeensyStep
         int32_t A, B; // Bresenham paramters
         int32_t vMax;
         int32_t vPullIn, vPullOut;
+        int32_t minvPullIn, minvPullOut;
         uint32_t a;
 
         // compare functions
