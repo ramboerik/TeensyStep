@@ -6,7 +6,7 @@
 namespace TeensyStep
 {
     template<unsigned N = 100>
-    class MotionPlanner{
+    class MotionPlanner2D{
         protected:
             static constexpr unsigned maxSize = N;
             unsigned numTargets = 0;
@@ -30,7 +30,7 @@ namespace TeensyStep
             /**
              * \brief Add point to motion.
              */
-            bool addPoint(int x, int y, int z){
+            bool addPoint(int x, int y, int z = 0){
                 if(numTargets >= maxSize) return false;
                 targetsX[numTargets].target = x;
                 targetsY[numTargets].target = y;
