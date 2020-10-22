@@ -119,11 +119,11 @@ namespace TeensyStep
 
     void Stepper::loadTarget(const Target& t)
     {
-        //Serial.printf("Loading target %d, index: %d of total: %d\r\n", t.target, t_index, targets.size());
         setMaxSpeed(t.speed * vMax);
         vPullIn = minvPullIn + t.vPullIn*(vMax - minvPullIn);
         vPullOut = minvPullOut + t.vPullOut*(vMax - minvPullOut);
         t.absPos ? setTargetAbs(t.target) : setTargetRel(t.target);
+        //Serial.printf("%s loaded target %d, speed %d, pullin: %d, pullout: %d\r\n", name.c_str(), t.target, vMax, vPullIn, vPullOut);
     }
 
     void Stepper::setTargets(const Target *t, unsigned len)

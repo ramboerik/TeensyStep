@@ -44,10 +44,16 @@ namespace TeensyStep
              * \return Angle in degrees
              */
             float getAngle(int x0, int y0, int x1, int y1){
+                if((x0 == 0 && y0 == 0) || (x1 == 0 && y1 == 0)){
+                    // handle null vector as full speed, happens e.g when duplicated
+                    // points are given.
+                    return 0;
+                }
                 float v0_d = sqrtf(x0*x0 + y0*y0);
                 float v1_d = sqrtf(x1*x1 + y1*y1);
                 float dot = x0*x1 + y0*y1;
                 float angle = acosf(dot / (v0_d * v1_d))*180/PI;
+            //    Serial.printf("Calculating angle, v0_d: %f, v1_d: %f, dot: %f, angle: %f\r\n", v0_d, v1_d, dot, angle);
                 return angle;
             }
 
@@ -68,22 +74,21 @@ namespace TeensyStep
             }
 
             /**
-             * \brief Internal function to set target for the steppers with start/end speed depending
+             * \brief Internal function to update target for the steppers with start/end speed depending
              *        on angle change in motion. If the angle of the motion is changed with more than 45
              *         degrees a full stop/start is done between the targets. If the angle is less than 45
              *         degrees full speed is kept.
-             * \param[in] t_x X target
-             * \param[in] t_y Y target
+             * \param[in] x target
+             * \param[in] y target
              * \param[in] angle Angle between the current and the next target vector
-             * \param[in] speed_x X axis max speed
-             * \param[in] speed_y Y axis max speed
-             * \param[in/out] pullin_x Pullin X speed to use for the current target. Is also updated to be used for the next target.
-             * \param[in/out] pullin_y Pullin Y speed to use for the current target. Is also updated to be used for the next target.
+             * \param[in] speed_x X axis speed in percent, 0.0 - 1.0
+             * \param[in] speed_y Y axis speed in percent, 0.0 - 1.0
+             * \param[in/out] pullin_x Pullin X speed(0.0 - 1.0) to use for the current target. Is also updated to be used for the next target.
+             * \param[in/out] pullin_y Pullin Y speed(0.0 - 1.0) to use for the current target. Is also updated to be used for the next target.
              */
             void updateTarget(Target& x,  Target& y, float angle, float speed_x, float speed_y, float &pullin_x, float &pullin_y)
             {
-                //Serial.printf("Target (x: %d, y: %d), speed_x: %d, speed_y: %d, angle: ", x.target, y.target, speed_x, speed_y);
-                //Serial.println(angle);
+                //Serial.printf("Target (x: %d, y: %d), pullin: %f, pullout: %f, angle: %f\r\n", x.target, y.target, pullin_x, angle < 45 ? speed_x : 0, angle);
                 if(angle < 45)
                 {
                     // the change in motion angle is low, we can keep full speed
@@ -102,8 +107,7 @@ namespace TeensyStep
             }
 
             /**
-             * \brief Calculate motion, must be done before call to move of steppers. The motion should be re-calculated on
-             *        every new call to move, even if no points were removed/added.
+             * \brief Calculate motion, must be done before call to move of steppers.
              *        NOTE:
              *        * There is currently no way to find out if the steppers managed to reach their end speed(ve) or not
              *          so the assumption is that they always reach it. This can cause undesired high acc/dec if the
@@ -115,35 +119,29 @@ namespace TeensyStep
              *          targets: 1,1), (10,10)
              *          => Ve won't be reached when moving from (0,0) -> (1,1) but is set as start speed(vs) when starting with movement from (1,1) ->
              *          (10,10). This causes the steppers to accelerate from pullin speed to 500 in one step.
+             *          The worst case is when duplicated points are given after each other. It causes the acceleration/deceleration phase to be skipped completly.
              */
-            void calculate(int posX, int posY, int posZ)
+            void calculate()
             {
                 float next_pullin_x = 0;
                 float next_pullin_y = 0;
                 if(numTargets == 0){
                     return;
                 }
-
-                // First point, we must take the current stepper position into consideration.
-                int x0 = targetsX[0].target - posX;
-                int y0 = targetsY[0].target - posY;
-                float angle = getAngle(posX, posY, x0, y0);
-                //getSpeed(x0, y0, speed_x, speed_y);
-                updateTarget(targetsX[0], targetsY[0], angle, 1.0, 1.0, next_pullin_x, next_pullin_y);
-
                 // quit if there's only one target
                 if(numTargets < 2){
+                    updateTarget(targetsX[0], targetsY[0], 90, 1.0, 1.0, next_pullin_x, next_pullin_y);
                     return;
                 }
 
-                x0 = targetsX[1].target - targetsX[0].target;
-                y0 = targetsY[1].target - targetsY[0].target;
+                int x0 = targetsX[1].target - targetsX[0].target;
+                int y0 = targetsY[1].target - targetsY[0].target;
                 unsigned i;
-                for(i = 1; i < numTargets - 1; i++){
+                for(i = 0; i < numTargets - 1; i++){
                     int x1 = targetsX[i+1].target - targetsX[i].target;
                     int y1 = targetsY[i+1].target - targetsY[i].target;
 
-                    angle = getAngle(x0, y0, x1, y1);
+                    float angle = getAngle(x0, y0, x1, y1);
                     //getSpeed(x1, y1, speed_x, speed_y);
                     updateTarget(targetsX[i], targetsY[i], angle, 1.0, 1.0, next_pullin_x, next_pullin_y);
                     x0 = x1;
