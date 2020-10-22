@@ -82,20 +82,21 @@ namespace TeensyStep
     {
         setDir(speed >= 0 ? 1 : -1);
         vMax = std::min(vMaxMax, std::max(-vMaxMax, speed));
+        originalvMax = vMax;
         return *this;
     }
 
     Stepper& Stepper::setPullInSpeed(int32_t speed)
     {
         vPullIn = std::abs(speed);
-        minvPullIn = vPullIn;
+        originalvPullIn = vPullIn;
         return *this;
     }
 
     Stepper& Stepper::setPullOutSpeed(int32_t speed)
     {
         vPullOut = std::abs(speed);
-        minvPullOut = vPullOut;
+        originalvPullOut = vPullOut;
         return *this;
     }
 
@@ -119,9 +120,10 @@ namespace TeensyStep
 
     void Stepper::loadTarget(const Target& t)
     {
-        setMaxSpeed(t.speed * vMax);
-        vPullIn = minvPullIn + t.vPullIn*(vMax - minvPullIn);
-        vPullOut = minvPullOut + t.vPullOut*(vMax - minvPullOut);
+        vMax = t.speed * originalvMax;
+        setDir(vMax >= 0 ? 1 : -1);
+        vPullIn = originalvPullIn + t.vPullIn*(originalvMax - originalvPullIn);
+        vPullOut = originalvPullOut + t.vPullOut*(originalvMax - originalvPullOut);
         t.absPos ? setTargetAbs(t.target) : setTargetRel(t.target);
         //Serial.printf("%s loaded target %d, speed %d, pullin: %d, pullout: %d\r\n", name.c_str(), t.target, vMax, vPullIn, vPullOut);
     }

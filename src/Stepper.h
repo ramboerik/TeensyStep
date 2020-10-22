@@ -57,9 +57,9 @@ namespace TeensyStep
         unsigned targetsPos = 0;
 
         int32_t A, B; // Bresenham paramters
-        int32_t vMax;
+        int32_t vMax, originalvMax;
         int32_t vPullIn, vPullOut;
-        int32_t minvPullIn, minvPullOut;
+        int32_t originalvPullIn, originalvPullOut;
         uint32_t a;
 
         // compare functions
