@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <string>
 #include "Target.h"
 
 namespace TeensyStep
@@ -34,6 +33,7 @@ namespace TeensyStep
         bool nextTarget();
         void repeatTargets();
         void removeTargets();
+        const char* getName() { return name; }
 
         inline int32_t getPosition() const { return current; }
         inline void setPosition(int32_t pos) { current = pos; }
@@ -81,7 +81,7 @@ namespace TeensyStep
         volatile uint8_t reverse;
 #endif
         const int stepPin, dirPin;
-        std::string name;
+        char name[32];
 
         // Friends
         template <typename a, typename t>

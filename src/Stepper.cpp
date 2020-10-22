@@ -10,7 +10,7 @@ namespace TeensyStep
     const uint32_t Stepper::aDefault = 2500; // reasonably low (~0.5s for reaching the default speed)
 
     Stepper::Stepper(const int _stepPin, const int _dirPin, const char* name)
-        : current(0), targetsLen(0), targetsPos(0), stepPin(_stepPin), dirPin(_dirPin), name(name)
+        : current(0), targetsLen(0), targetsPos(0), stepPin(_stepPin), dirPin(_dirPin)
     {
         setStepPinPolarity(HIGH);
         setInverseRotation(false);
@@ -20,6 +20,7 @@ namespace TeensyStep
 
         pinMode(stepPin, OUTPUT);
         pinMode(dirPin, OUTPUT);
+        snprintf(this->name, sizeof(this->name), "%s", name);
     }
 
     Stepper& Stepper::setStepPinPolarity(int polarity)
