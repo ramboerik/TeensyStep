@@ -33,6 +33,8 @@ namespace TeensyStep
         bool nextTarget();
         const char* getName() { return name; }
 
+        int32_t getMaxSpeed() { return vMax; }
+        int32_t getAcceleration() { return a; }
         inline int32_t getPosition() const { return current; }
         inline void setPosition(int32_t pos) { current = pos; }
         int32_t dir;
