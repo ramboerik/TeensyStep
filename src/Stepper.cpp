@@ -88,13 +88,13 @@ namespace TeensyStep
 
     Stepper& Stepper::setPullInSpeed(int32_t speed)
     {
-        vPullIn = std::abs(speed);
+        vPullIn = vPullInMax = std::abs(speed);
         return *this;
     }
 
     Stepper& Stepper::setPullOutSpeed(int32_t speed)
     {
-        vPullOut = std::abs(speed);
+        vPullOut = vPullOutMax = std::abs(speed);
         return *this;
     }
 
@@ -118,14 +118,17 @@ namespace TeensyStep
 
     void Stepper::loadTarget(const Target& t)
     {
-        if(t.dir == Target::NONE){
+        if(t.dir == Target::NONE)
+        {
+            // Restore pullin/pullout motion as they have been modified.
+            vPullIn = vPullInMax;
+            vPullOut = vPullOutMax;
             A = 0;
-            //Serial.printf("Stepper: %s skipping target: %d\r\n", getName(), t.target);
             return;
         }
-        setPullInOutSpeed(t.vPullIn, t.vPullOut);
+        vPullIn = t.vPullIn;
+        vPullOut = t.vPullOut;
         setTargetAbs(t.target);
-        //Serial.printf("%s loaded target %d, speed %d, pullin: %d, pullout: %d\r\n", name.c_str(), t.target, vMax, vPullIn, vPullOut);
     }
 
     void Stepper::setTargets(const Target *t, unsigned len)

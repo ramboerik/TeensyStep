@@ -35,6 +35,10 @@ namespace TeensyStep
 
         int32_t getMaxSpeed() { return vMax; }
         int32_t getAcceleration() { return a; }
+        int32_t getMaxPullInSpeed() { return vPullInMax; }
+        int32_t getMaxPullOutSpeed() { return vPullOutMax; }
+
+
         inline int32_t getPosition() const { return current; }
         inline void setPosition(int32_t pos) { current = pos; }
         int32_t dir;
@@ -59,6 +63,9 @@ namespace TeensyStep
         int32_t A, B; // Bresenham paramters
         int32_t vMax;
         int32_t vPullIn, vPullOut;
+        int32_t vPullInMax, vPullOutMax; // store configured pullin/pullout speeds
+                                         // in separate variables as they get overwritten
+                                         // when loading motion targets
         uint32_t a;
 
         // compare functions
