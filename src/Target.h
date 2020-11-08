@@ -5,30 +5,42 @@ namespace TeensyStep
     class Target
     {
     public:
-        Target(int32_t target = 0, float speed = 1, float vPullIn = 0, float vPullOut = 0, bool absPos = true) :
-            target(target), speed(speed), vPullIn(vPullIn), vPullOut(vPullOut), absPos(absPos) {}
-        int32_t target;
-        float speed;
-        float vPullIn;
-        float vPullOut;
-        bool absPos;
+        enum Direction
+        {
+            NONE = 0,
+            FORWARD = 1,
+            REVERSE = 2
+        };
 
-        /**
-         * \brief Set scale factors for target speed, pullin speed and pullout speed.
-         *        speed:
-         *              0.0 = zero speed
-         *              1.0 = vMax
-         *        vPullIn:
-         *                0.0: vPullIn
-         *                1.0: vMax
-         *        vPullOut:
-         *                0.0: vPullOut
-         *                1.0: vMax
-         */
-        void setSpeedFactors(float speed, float vPullIn, float vPullOut){
-            this->speed = std::min(1.f, speed);
-            this->vPullIn = std::min(1.f, vPullIn);
-            this->vPullOut = std::min(1.f, vPullOut);
+        int32_t target;
+        int32_t vPullIn;
+        int32_t vPullOut;
+        Direction dir;
+
+        Target(int32_t target = 0, int32_t vPullIn = 0, int32_t vPullOut = 0, Direction dir = NONE) :
+            target(target), vPullIn(vPullIn), vPullOut(vPullOut), dir(dir) {}
+
+        static Direction getDirection(const Target &start, const Target &end)
+        {
+            int distance = end.target - start.target;
+            if(distance == 0)
+            {
+                return NONE;
+            }
+            return distance > 0 ? FORWARD : REVERSE;
+        }
+
+        static const char* DirectionToStr(Direction dir)
+        {
+            switch(dir)
+            {
+                case FORWARD:
+                    return "forward";
+                case REVERSE:
+                    return "reverse";
+                default:
+                    return "none";
+            }
         }
     };
 }

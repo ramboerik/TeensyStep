@@ -31,8 +31,6 @@ namespace TeensyStep
         virtual void setTargetRel(int32_t delta); // Set target position relative to current position
         void setTargets(const Target *targets, unsigned len);
         bool nextTarget();
-        void repeatTargets();
-        void removeTargets();
         const char* getName() { return name; }
 
         inline int32_t getPosition() const { return current; }
@@ -57,9 +55,8 @@ namespace TeensyStep
         unsigned targetsPos = 0;
 
         int32_t A, B; // Bresenham paramters
-        int32_t vMax, originalvMax;
+        int32_t vMax;
         int32_t vPullIn, vPullOut;
-        int32_t originalvPullIn, originalvPullOut;
         uint32_t a;
 
         // compare functions
