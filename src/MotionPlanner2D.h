@@ -130,13 +130,14 @@ namespace TeensyStep
                         continue;
                     }
                     segEnd = i;
-
+                    /*
                     Serial.printf("Calculating max speed for segment: %d -> %d with direction: %s, (segstart: %d, segend: %d)\r\n",
                                   targets[segStart].target,
                                   targets[segEnd].target,
                                   Target::DirectionToStr(targets[segEnd].dir),
                                   segStart,
                                   segEnd);
+                    */
 
                      // calculate the motion for the segment
                     accelerator.prepareMovement(targets[segStart].target, targets[segEnd].target, vMax, pullIn, pullOut, acc);
@@ -162,6 +163,7 @@ namespace TeensyStep
                 x.setTargets(getX(), size());
                 y.setTargets(getY(), size());
 
+                /*
                 Serial.println("==== DUMP X====");
                 for(unsigned i = 0; i < size(); i++)
                 {
@@ -173,6 +175,7 @@ namespace TeensyStep
                     Serial.printf("pos: %d, pullin: %d, pullout: %d\r\n", getY()[i].target, getY()[i].vPullIn, getY()[i].vPullOut);
                 }
                 Serial.println("========");
+                */
             }
     };
 }
