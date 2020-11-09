@@ -22,6 +22,7 @@ namespace TeensyStep
 
         public:
             MotionPlanner2D() {}
+            unsigned getMaxSize() {return maxSize; }
             // Actual speed will be in the interval [speed, sqrt(2)*speed] as the speed in
             // separated in x and y component.
             // lowest speed is reached when only one axis run.
