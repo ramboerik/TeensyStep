@@ -45,6 +45,7 @@ namespace TeensyStep
 
      protected:
         void loadTarget(const Target& t);
+        void reset();
 
         inline void doStep();
         inline void clearStepPin() const;

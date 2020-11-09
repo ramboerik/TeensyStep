@@ -120,10 +120,7 @@ namespace TeensyStep
     {
         if(t.dir == Target::NONE)
         {
-            // Restore pullin/pullout motion as they have been modified.
-            vPullIn = vPullInMax;
-            vPullOut = vPullOutMax;
-            A = 0;
+            reset();
             return;
         }
         vPullIn = t.vPullIn;
@@ -145,11 +142,21 @@ namespace TeensyStep
     {
         if(targetsPos >= targetsLen)
         {
-            A = 0; // set number of steps to zero to flag that there is no more work
-                   // to do for this stepper
+            reset();
             return false;
         }
         loadTarget(targets[targetsPos++]);
         return true;
+    }
+
+    /**
+     * \brief Reset parameters that might have been changed by the motion planner
+     */
+    void Stepper::reset()
+    {
+        // Restore pullin/pullout motion as they have been modified.
+        vPullIn = vPullInMax;
+        vPullOut = vPullOutMax;
+        A = 0;
     }
 }
