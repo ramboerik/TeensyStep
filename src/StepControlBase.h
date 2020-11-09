@@ -1,7 +1,6 @@
 #pragma once
 
 #include "MotorControlBase.h"
-#include <array>
 
 namespace TeensyStep
 {
@@ -66,7 +65,8 @@ namespace TeensyStep
 
         bool nextTarget();
         bool filterMotorList();
-        bool doMove(float speedOverride = 1.0f, bool startTimers = true);
+        void doMove(float speedOverride = 1.0f, bool startTimers = true);
+        bool loadNext() override;
 
         Accelerator accelerator;
 
@@ -84,7 +84,7 @@ namespace TeensyStep
     }
 
     /**
-     * \brief Load the next target for all attached steppers.
+     * \brief Prepare the steppers with the next targets.
      * \return True if there are targets left for any stepper, false if there is nothing more to do.
      */
     template <typename a, typename t>
@@ -98,32 +98,9 @@ namespace TeensyStep
         return anyTarget;
     }
 
-    /**
-     * \brief Iterate attached steppers and remove steppers with no steps/speed. Steppers that already are at their target or have
-     *        zero speed will be removed. This is an optimization of cases when
-     *        steppers with slow target speed otherwise would determine/limit the max speed for all other steppers.
-     * \param[out] True if there is movement to do, false if nothing to do.
-     */
     template <typename a, typename t>
-    bool StepControlBase<a, t>::filterMotorList()
+    void StepControlBase<a, t>::doMove(float speedOverride, bool startTimers)
     {
-        auto end = std::copy_if(this->fullList.begin(), this->fullList.begin() + this->fullListLen, this->motorList.begin(), [](Stepper*s) {return s->vMax != 0 && s->A != 0; });
-        this->numSteppers = std::distance(this->motorList.begin(), end);
-        return this->numSteppers != 0;
-    }
-
-    template <typename a, typename t>
-    bool StepControlBase<a, t>::doMove(float speedOverride, bool startTimers)
-    {
-        // Search next target with work if the current loaded target doesn't have any.
-        while(!filterMotorList())
-        {
-            if(!nextTarget())
-            {
-                return false; // no more work or targets, time to end movement.
-            }
-        }
-
         //Calculate Bresenham parameters -------------------------------------
         std::sort(this->motorList.begin(), this->motorList.begin() + this->numSteppers, Stepper::cmpDelta); // The motor which does most steps leads the movement, move to top of list
         this->leadMotor = this->motorList[0];
@@ -150,6 +127,17 @@ namespace TeensyStep
             this->timerField.stepTimerStart();
             this->timerField.accTimerStart();
         }
+    }
+
+    /**
+     * \brief Start movement of next target.
+     */
+    template <typename a, typename t>
+    bool StepControlBase<a, t>::loadNext() {
+        if(!nextTarget()){
+            return false;
+        }
+        doMove(1.0f, false);
         return true;
     }
 
@@ -158,23 +146,10 @@ namespace TeensyStep
     template <typename a, typename t>
     void StepControlBase<a, t>::accTimerISR()
     {
-        if(!this->isRunning())
+        if(this->isRunning())
         {
-            return;
+            this->timerField.setStepFrequency(accelerator.updateSpeed(this->leadMotor->current));
         }
-        int32_t speed = accelerator.updateSpeed(this->leadMotor->current);
-        // Movement is finished when speed is 0
-        if(speed == 0)
-        {
-            nextTarget(); // load next move to be processed
-            if(doMove(1.0f, false))
-            {
-                // If there are more targets end here as the step freq. timer
-                // has already been updated in the doMove call.
-                return;
-            }
-        }
-        this->timerField.setStepFrequency(speed);
     }
 
     // Non blocking movements ---------------------------------------------------------------------------------------

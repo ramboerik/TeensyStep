@@ -42,6 +42,8 @@ namespace TeensyStep{
         void attachStepper(Stepper& stepper, Steppers&... steppers);
         void attachStepper(Stepper& stepper);
 
+        virtual bool loadNext() { return false; }
+
         void stepTimerISR();
         void pulseTimerISR();
 
@@ -129,10 +131,15 @@ namespace TeensyStep{
 
         if (mode == Mode::target && (leadMotor->current == leadMotor->target)) // stop timer and call callback if we reached target
         {
-            //timerField.stepTimerStop();
+            if(loadNext())
+            {
+                return;
+            }
             timerField.endAfterPulse();
             if (callback != nullptr)
+            {
                 callback();
+            }
         }
     }
 
