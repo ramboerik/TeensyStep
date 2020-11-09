@@ -64,6 +64,7 @@ namespace TeensyStep
         void accTimerISR();
 
         bool nextTarget();
+        bool hasTarget();
         bool filterMotorList();
         void doMove(float speedOverride = 1.0f, bool startTimers = true);
         bool loadNext() override;
@@ -98,9 +99,29 @@ namespace TeensyStep
         return anyTarget;
     }
 
+    /**
+     * \brief Iterate through list of attached steppers and check if any has work to do.
+     * \return true if at least one stepper has movement to do, false on nothing to do.
+     */
+    template <typename a, typename t>
+    bool StepControlBase<a, t>::hasTarget(){
+        for(unsigned i = 0; i < this->fullListLen; i++)
+        {
+            if(this->fullList[i]->A != 0) return true;
+        }
+        return false;
+    }
+
     template <typename a, typename t>
     void StepControlBase<a, t>::doMove(float speedOverride, bool startTimers)
     {
+        // scan for new movement if nothing is loaded
+        while(!hasTarget()){
+            if(!nextTarget()){
+                // if there are no more targets exit
+                return;
+            }
+        }
         //Calculate Bresenham parameters -------------------------------------
         std::sort(this->motorList.begin(), this->motorList.begin() + this->numSteppers, Stepper::cmpDelta); // The motor which does most steps leads the movement, move to top of list
         this->leadMotor = this->motorList[0];
