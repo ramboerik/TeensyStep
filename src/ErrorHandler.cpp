@@ -41,7 +41,7 @@ namespace TeensyStep
 
         while (true)
         {
-            digitalToggle(LED_BUILTIN);
+            digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
             delay(50);
         }
     }

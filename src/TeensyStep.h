@@ -10,7 +10,12 @@
 #include "version.h"
 //#include "accelerators/SinRotAccelerator.h"
 
+#if defined(__linux__)
+#include "timer/linux/TimerField.h"
+
+#else
 #include "timer/generic/TimerField.h"
+#endif
 
 // TEENSY 3.0 - Teensy 3.6 ==================================================================================
 
@@ -36,12 +41,19 @@
 // Linear acceleration -----------------------------------------------------------------------------------------
 
 //using MotorControl = TeensyStep::MotorControlBase<TimerField>;
+#if defined(__linux__)
+// use soft timers when compiling  for linux
+using StepControl = TeensyStep::StepControlBase<LinStepAccelerator, TickTimerField>;
+using RotateControl = TeensyStep::RotateControlBase<LinStepAccelerator, TickTimerField>;
 
+#else
 using RotateControl = TeensyStep::RotateControlBase<LinRotAccelerator, TimerField>;
 using StepControl = TeensyStep::StepControlBase<LinStepAccelerator, TimerField>;
 
 using StepControlTick = TeensyStep::StepControlBase<LinStepAccelerator, TickTimerField>;
 using RotateControlTick = TeensyStep::RotateControlBase<LinStepAccelerator, TickTimerField>;
+#endif
+
 
 // Sine acceleration -------------------------------------------------------------------------------------------
 

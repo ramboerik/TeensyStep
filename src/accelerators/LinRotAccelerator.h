@@ -41,11 +41,15 @@ void LinRotAccelerator::prepareRotation(int32_t currentPosition, int32_t targetS
 void LinRotAccelerator::overrideSpeed(float factor)
 {
     //Serial.printf("a:------ %d\n", a);
-
+#if !defined(__linux__)
     noInterrupts();
+#endif
+
     v_tgt = v_tgt_orig * factor;
     dv = v_tgt > v_cur ? dv_cur : -dv_cur;
+#if !defined(__linux__)
     interrupts();
+#endif
 }
 
 void LinRotAccelerator::overrideAcceleration(float factor)
@@ -53,10 +57,14 @@ void LinRotAccelerator::overrideAcceleration(float factor)
     //Serial.printf("a:------ %d\n", a);
     if (factor > 0)
     {
+#if !defined(__linux__)
         noInterrupts();
+#endif
         dv_cur = dv_orig * factor;
         dv *= factor;
+#if !defined(__linux__)
         interrupts();
+#endif
     }
 }
 
@@ -84,4 +92,3 @@ int32_t LinRotAccelerator::initiateStopping(int32_t curPos)
 //     v_tgt = 0.0f;
 //     interrupts();
 // }
-
