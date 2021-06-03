@@ -50,8 +50,8 @@ namespace TeensyStep
         inline void doStep();
         inline void clearStepPin() const;
 
-        inline void setDir(int d);
-        inline void toggleDir();
+        virtual void setDir(int d);
+        void toggleDir();
 
         // positions
         volatile int32_t current;
@@ -100,7 +100,6 @@ namespace TeensyStep
         template <typename t>
         friend class MotorControlBase;
     };
-
     // Inline implementation -----------------------------------------
 #if defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK64FX512__) || defined(__MK66FX1M0__)
     void Stepper::doStep()
@@ -114,11 +113,6 @@ namespace TeensyStep
         *stepPinInactiveReg = 1;
     }
 
-    void Stepper::setDir(int d)
-    {
-        dir = d;
-        dir == 1 ? *dirPinCwReg = 1 : *dirPinCcwReg = 1;
-    }
 #else
     void Stepper::doStep()
     {
@@ -130,16 +124,5 @@ namespace TeensyStep
     {
         digitalWrite(stepPin, !polarity);
     }
-
-    void Stepper::setDir(int d)
-    {
-        dir = d;
-        digitalWrite(dirPin, dir == 1 ? reverse : !reverse);
-    }
 #endif
-
-    void Stepper::toggleDir()
-    {
-        setDir(-dir);
-    }
 }

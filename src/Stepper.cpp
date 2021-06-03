@@ -24,6 +24,25 @@ namespace TeensyStep
         snprintf(this->name, sizeof(this->name), "%s", name);
     }
 
+#if defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK64FX512__) || defined(__MK66FX1M0__)
+    void Stepper::setDir(int d)
+    {
+        dir = d;
+        dir == 1 ? *dirPinCwReg = 1 : *dirPinCcwReg = 1;
+    }
+#else
+    void Stepper::setDir(int d)
+    {
+        dir = d;
+        digitalWrite(dirPin, dir == 1 ? reverse : !reverse);
+    }
+#endif
+
+    void Stepper::toggleDir()
+    {
+        setDir(-dir);
+    }
+
     Stepper& Stepper::setStepPinPolarity(int polarity)
     {
 #if defined(__MK20DX128__) || defined(__MK20DX256__) || defined(__MK64FX512__) || defined(__MK66FX1M0__)
